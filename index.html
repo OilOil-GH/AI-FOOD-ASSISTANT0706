@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<title>AI Food Assistant — หาร้านอาหารทีม 8–12 คน</title>
+<style>
+  :root {
+    --bg:#FEF6E8; --bg2:#FFFFFF; --bg3:#FFF1D6;
+    --text:#1B2A4A; --text2:#6B7280; --accent:#F48C0A;
+    --navy:#1B2A4A; --navy2:#243752;
+    --siam:#0284C7; --ari:#16A34A; --tl:#D97706; --asok:#DB2777; --pp:#7C3AED;
+    --gold:#F48C0A; --silver:#9CA3AF; --bronze:#B45309;
+    --shadow:0 2px 14px rgba(27,42,74,.08); --shadow-lg:0 8px 32px rgba(27,42,74,.14);
+    --border:#E8DCC8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:"Kanit","Prompt","Sarabun",sans-serif;font-weight:400;font-size:16px;line-height:1.6;}
+  a{color:var(--accent);text-decoration:none;}
+  a:hover{text-decoration:underline;}
+
+  /* Layout */
+  .container{max-width:1120px;margin:0 auto;padding:0 40px;}
+  section{padding:4px 0;}
+  .accordion-group{display:flex;flex-direction:column;gap:6px;margin:8px 0;}
+
+  /* Header */
+  header{background:linear-gradient(135deg,#1B2A4A 0%,#243752 60%,#1B2A4A 100%);padding:44px 0 36px;position:relative;z-index:2;}
+  .header-badge{display:inline-block;background:var(--accent);color:#fff;font-size:12px;font-weight:700;padding:5px 16px;border-radius:20px;margin-bottom:14px;letter-spacing:1px;box-shadow:0 3px 12px rgba(244,140,10,.4);}
+  h1{font-size:2.2rem;font-weight:800;margin-bottom:8px;color:#fff;}
+  .header-meta{display:flex;gap:16px;flex-wrap:wrap;color:rgba(255,255,255,.85);font-size:14px;margin-top:10px;}
+  .header-meta span{display:flex;align-items:center;gap:6px;}
+  .live-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(244,140,10,.15);border:1.5px solid rgba(244,140,10,.5);padding:6px 14px;border-radius:20px;font-size:13px;color:#F48C0A;margin-top:12px;font-weight:600;}
+  .live-dot{width:8px;height:8px;background:#4ade80;border-radius:50%;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  /* Section headings */
+  h2{font-size:1.15rem;font-weight:800;color:var(--navy);margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+  h2::before{content:"";display:block;width:4px;height:22px;background:var(--accent);border-radius:2px;flex-shrink:0;}
+  /* ── Prominent section headings for main sections ── */
+  h2.section-h2{font-size:1.35rem;font-weight:900;color:var(--navy);letter-spacing:-0.3px;background:linear-gradient(135deg,#fff 0%,var(--bg3) 100%);border:1.5px solid var(--border);border-radius:16px;padding:14px 20px;box-shadow:0 2px 12px rgba(27,42,74,.07);width:100%;}
+  h2.section-h2::before{width:5px;height:28px;background:linear-gradient(180deg,var(--accent) 0%,#F97316 100%);border-radius:3px;}
+  .section-h2-sub{font-size:13px;font-weight:500;color:var(--text2);margin-left:4px;}
+  h3{font-size:1rem;font-weight:700;margin-bottom:10px;color:var(--text);}
+
+  /* Info boxes */
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr;}}
+  @media(max-width:900px){.tools-grid{grid-template-columns:repeat(3,1fr);}}
+  @media(max-width:580px){.tools-grid{grid-template-columns:repeat(2,1fr);}}
+  .info-box{background:var(--bg3);border:1px solid var(--border);border-radius:16px;padding:24px;}
+
+  /* Workflow steps */
+  .steps{display:flex;flex-wrap:wrap;}
+  .step{flex:1;min-width:110px;text-align:center;padding:14px 6px;position:relative;}
+  .step:not(:last-child)::after{content:"→";position:absolute;right:-10px;top:50%;transform:translateY(-50%);color:var(--accent);font-size:16px;}
+  .step-icon{font-size:26px;margin-bottom:6px;}
+  .step-num{font-size:11px;color:var(--accent);font-weight:700;letter-spacing:1px;}
+  .step-title{font-size:13px;font-weight:700;color:var(--text);}
+  .step-sub{font-size:11px;color:var(--text2);margin-top:2px;}
+
+  /* Tools */
+  .tools-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+  .tool-chip{background:#fff;border:1.5px solid #FFE4CC;border-radius:14px;padding:16px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:14px;box-shadow:var(--shadow);text-align:center;transition:box-shadow .2s,transform .2s;}
+  .tool-chip:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);}
+  .tool-chip .icon{font-size:28px;line-height:1;}
+  .tool-chip .label{font-weight:800;color:var(--navy);font-size:13px;}
+  .tool-chip .desc{font-size:11px;color:var(--text2);line-height:1.4;}
+
+  /* Scoring table */
+  .scoring-table{width:100%;border-collapse:collapse;font-size:14px;}
+  .scoring-table th{background:var(--bg3);padding:10px 14px;text-align:left;font-weight:700;color:var(--text);font-size:13px;border-bottom:2px solid #FFE4CC;}
+  .scoring-table td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);}
+  .scoring-table tr:hover td{background:var(--bg3);}
+  .weight-bar{background:var(--border);border-radius:4px;height:6px;margin-top:4px;}
+  .weight-fill{background:var(--accent);border-radius:4px;height:6px;}
+
+  /* Filter bar */
+  .filter-bar{background:#fff;border:1px solid var(--border);border-radius:20px;padding:24px;margin-bottom:24px;box-shadow:var(--shadow);}
+  .filter-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+  .filter-row:last-child{margin-bottom:0;}
+  .filter-label{font-size:13px;color:var(--text);font-weight:700;min-width:60px;}
+  .btn-group{display:flex;gap:6px;flex-wrap:wrap;}
+  .btn{padding:7px 16px;border-radius:20px;border:1.5px solid var(--border);background:#fff;color:var(--text2);font-size:13px;cursor:pointer;transition:all .2s;font-family:inherit;font-weight:600;}
+  .btn:hover{border-color:var(--accent);color:var(--accent);background:var(--bg3);}
+  .btn.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;box-shadow:0 2px 8px rgba(244,140,10,.35);}
+  .btn.siam.active{background:var(--siam);border-color:var(--siam);color:#fff;}
+  .btn.อารีย์.active{background:var(--ari);border-color:var(--ari);color:#fff;}
+  .btn.ทองหล่อ.active{background:var(--tl);border-color:var(--tl);color:#fff;}
+  .btn.อโศก.active{background:var(--asok);border-color:var(--asok);color:#fff;}
+  .btn.พร้อมพงษ์.active{background:var(--pp);border-color:var(--pp);color:#fff;}
+  .budget-note{font-size:13px;color:var(--text2);}
+  .budget-input{background:#fff;border:1.5px solid var(--border);color:var(--text);padding:7px 12px;border-radius:8px;font-size:13px;width:100px;font-family:inherit;}
+  .budget-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(249,115,22,.1);}
+
+  /* Ranking table */
+  .rank-table{width:100%;border-collapse:collapse;font-size:14px;}
+  .rank-table th{background:#1B2A4A;padding:10px 12px;text-align:left;font-weight:600;color:rgba(255,255,255,.9);font-size:12px;border-bottom:none;white-space:nowrap;}
+  .rank-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text);background:#FEFCFA;}
+  .rank-table tr:nth-child(even) td{background:#FFF5E8;}
+  .rank-table tr:nth-child(even):hover td{background:#FFE8C4;}
+  .rank-table tr:hover td{background:#FFF3D6;}
+  .rank-num{font-size:18px;font-weight:800;}
+  .rank-1{color:var(--gold);}
+  .rank-2{color:var(--silver);}
+  .rank-3{color:var(--bronze);}
+  .rank-other{color:var(--text2);font-size:15px;}
+  .name-cell{font-weight:700;color:var(--text);}
+  .name-cell .type-tag{font-size:11px;background:var(--bg3);padding:2px 7px;border-radius:10px;color:var(--text2);margin-left:6px;border:1px solid #FFE4CC;}
+  .area-tag{font-size:12px;padding:3px 10px;border-radius:20px;font-weight:700;white-space:nowrap;display:inline-block;}
+  .area-สยาม{background:#DBEAFE;color:var(--siam);}
+  .area-อารีย์{background:#DCFCE7;color:var(--ari);}
+  .area-ทองหล่อ{background:#FEF3C7;color:var(--tl);}
+  .area-อโศก{background:#FCE7F3;color:var(--asok);}
+  .area-พร้อมพงษ์{background:#EDE9FE;color:var(--pp);}
+  .score-total{font-size:18px;font-weight:800;color:var(--accent);}
+  .score-bar-wrap{display:flex;align-items:center;gap:8px;}
+  .score-bar{background:var(--border);border-radius:3px;height:5px;flex:1;min-width:60px;}
+  .score-fill{background:var(--accent);border-radius:3px;height:5px;}
+  .rating-star{color:var(--gold);}
+  .price-tag{font-size:12px;color:var(--text2);}
+  .maps-link{font-size:12px;padding:4px 9px;background:var(--bg3);border:1px solid #FFE4CC;border-radius:6px;color:var(--accent);display:inline-block;font-weight:600;}
+
+  /* Top 3 cards */
+  .top3-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;overflow:visible;}
+  @media(max-width:900px){.top3-grid{grid-template-columns:1fr 1fr;}}
+  @media(max-width:580px){.top3-grid{grid-template-columns:1fr;}}
+  .card{background:#fff;border-radius:20px;padding:22px 24px;border:2px solid var(--border);position:relative;overflow:visible;box-shadow:var(--shadow);transition:box-shadow .2s,transform .2s;}
+  .card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px);z-index:100;position:relative;}
+  .card-1{border-color:var(--gold);border-top:4px solid var(--gold);}
+  .card-2{border-color:var(--silver);border-top:4px solid var(--silver);}
+  .card-3{border-color:var(--bronze);border-top:4px solid var(--bronze);}
+  .card-medal{font-size:36px;margin-bottom:6px;}
+  .card-rank{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--text2);margin-bottom:4px;text-transform:uppercase;}
+  .card-name{font-size:17px;font-weight:800;margin-bottom:4px;color:var(--text);}
+  .card-area{margin-bottom:12px;}
+  .card-score{font-size:40px;font-weight:900;color:var(--accent);margin:6px 0;line-height:1;}
+  .card-score span{font-size:14px;font-weight:400;color:var(--text2);}
+  .card-detail{font-size:13px;color:var(--text2);margin-bottom:4px;}
+  .card-section{margin-top:14px;}
+  .card-section-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;}
+  .card-pros{font-size:13px;color:#16A34A;}
+  .card-cons{font-size:13px;color:#DC2626;}
+  .scores-mini{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;}
+  .score-mini-item{background:var(--bg3);border-radius:8px;padding:5px 10px;font-size:11px;text-align:center;border:1px solid #FFE4CC;}
+  .score-mini-item .label{color:var(--text2);display:block;font-size:10px;}
+  .score-mini-item .val{font-weight:800;color:var(--accent);}
+  .card-links{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+
+  /* Card score bars */
+  .card-score-bars{margin:10px 0;}
+  .card-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+  .card-bar-label{font-size:11px;color:var(--text2);width:80px;flex-shrink:0;}
+  .card-bar-track{flex:1;background:var(--border);border-radius:4px;height:7px;}
+  .card-bar-fill{border-radius:4px;height:7px;transition:width .5s ease;}
+  .card-bar-fill.strong{background:var(--accent);}
+  .card-bar-fill.medium{background:var(--gold);}
+  .card-bar-fill.weak{background:#FCA5A5;}
+  .card-bar-val{font-size:11px;font-weight:700;color:var(--text);width:34px;text-align:right;flex-shrink:0;}
+
+  /* Strength/weakness tags */
+  .strength-tags,.weakness-tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;}
+  .tag-strength{background:#DCFCE7;color:#16A34A;border:1px solid #BBF7D0;font-size:12px;padding:3px 10px;border-radius:20px;font-weight:600;}
+  .tag-weakness{background:#FEE2E2;color:#DC2626;border:1px solid #FECACA;font-size:12px;padding:3px 10px;border-radius:20px;font-weight:600;}
+  .card-link-btn{font-size:12px;padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);color:var(--accent);background:#fff;display:inline-block;font-weight:600;transition:all .2s;}
+  .card-link-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent);text-decoration:none;}
+
+  /* Comparison */
+  .compare-table{width:100%;border-collapse:collapse;font-size:14px;}
+  .compare-table th{background:var(--bg3);padding:12px 14px;text-align:left;font-size:13px;color:var(--text);font-weight:700;border-bottom:2px solid #FFE4CC;}
+  .compare-table td{padding:12px 14px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text);}
+  .compare-table tr:hover td{background:var(--bg3);}
+  .pros-list{color:#16A34A;}
+  .cons-list{color:#DC2626;}
+  .mini-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:6px;vertical-align:middle;}
+  .dot-green{background:#16A34A;}
+  .dot-red{background:#DC2626;}
+
+  /* Stats row */
+  .stats-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;}
+  .stat-item{background:var(--bg3);border:1px solid #FFE4CC;border-radius:12px;padding:14px 18px;text-align:center;flex:1;min-width:90px;}
+  .stat-num{font-size:26px;font-weight:800;color:var(--accent);}
+  .stat-label{font-size:12px;color:var(--text2);margin-top:2px;}
+
+  /* Source */
+  .source-tag{display:inline-flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid #FFE4CC;padding:4px 12px;border-radius:20px;font-size:12px;color:var(--text2);margin:4px;}
+
+  /* Data status */
+  #data-status{font-size:12px;color:rgba(255,255,255,.8);}
+  #data-status.live{color:#4ade80;}
+  #data-status.error{color:#FCA5A5;}
+
+  /* Footer */
+  footer{padding:30px 0;text-align:center;color:var(--text2);font-size:13px;background:#fff;border-top:1px solid var(--border);margin-top:20px;}
+
+  /* Responsive table */
+  .table-wrap{overflow-x:auto;border-radius:12px;overflow:visible;}
+  tr.highlight td{background:var(--bg3) !important;}
+  .no-results{text-align:center;padding:40px;color:var(--text2);}
+
+
+
+
+  /* ── Header redesign ── */
+  .header-inner{display:flex;align-items:center;justify-content:space-between;gap:28px;flex-wrap:wrap;}
+  .header-left{flex:1;min-width:280px;}
+  .header-right{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:16px;}
+  h1{font-size:2.4rem;font-weight:900;color:#fff;line-height:1.15;margin:10px 0 10px;letter-spacing:-0.5px;}
+  .h1-highlight{color:#FFF3CD;text-shadow:0 2px 8px rgba(0,0,0,.2);}
+  .header-sub{color:rgba(255,255,255,.82);font-size:14px;margin-bottom:12px;letter-spacing:0.2px;}
+  .header-areas{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;}
+  .area-pill{font-size:12px;font-weight:700;padding:5px 14px;border-radius:20px;border:1.5px solid rgba(255,255,255,.4);color:#fff;background:rgba(255,255,255,.12);letter-spacing:0.2px;}
+  .header-bottom-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .header-meta-sm{display:flex;gap:14px;color:rgba(255,255,255,.7);font-size:13px;}
+  .header-stat-card{background:rgba(255,255,255,.08);backdrop-filter:blur(8px);border:1.5px solid rgba(255,255,255,.2);border-radius:20px;padding:20px 24px;display:flex;gap:0;align-items:center;}
+  .hstat{text-align:center;padding:0 14px;}
+  .hstat-num{font-size:28px;font-weight:900;color:var(--accent);line-height:1;}
+  .hstat-label{font-size:11px;color:rgba(255,255,255,.75);margin-top:2px;white-space:nowrap;}
+  .hstat-divider{width:1px;height:40px;background:rgba(255,255,255,.3);}
+  .header-emoji{font-size:72px;line-height:1;filter:drop-shadow(0 4px 12px rgba(0,0,0,.2));}
+  @media(max-width:700px){.header-right{display:none;} h1{font-size:2rem;}}
+
+
+
+  /* ── Top 3 card name hover popup ── */
+  .card-name-hover{position:relative;cursor:pointer;display:block;}
+  .card-name-popup{position:absolute;top:calc(100% + 6px);left:0;background:#fff;border-radius:18px;box-shadow:0 16px 48px rgba(27,42,74,.22);border:1.5px solid var(--border);z-index:9999;width:280px;display:none;overflow:hidden;}
+  .card-name-hover:hover .card-name-popup{display:block;}
+  .card-np-name{font-size:13px;font-weight:800;color:var(--navy);margin-bottom:6px;line-height:1.3;}
+  .card-np-meta{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;}
+  .card-np-stats{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+  .card-np-stat{background:var(--bg3);border-radius:8px;padding:4px 9px;font-size:11px;font-weight:700;color:var(--navy);}
+  .card-np-links{display:flex;gap:6px;flex-wrap:wrap;}
+  .card-np-link{font-size:11px;padding:4px 10px;border-radius:20px;border:1.5px solid var(--border);color:var(--navy);background:#fff;font-weight:600;text-decoration:none;transition:all .15s;}
+  .card-np-link:hover{background:var(--navy);color:#fff;border-color:var(--navy);}
+
+
+  /* ── Compare cards (redesigned) ── */
+  .cmp-card{background:#fff;border-radius:16px;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:12px;overflow:visible;transition:box-shadow .2s,transform .2s;}
+  .cmp-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-1px);}
+  .cmp-top{padding:16px 20px 14px;border-bottom:2px solid var(--border);}
+  .cmp-top-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .cmp-rank{font-size:22px;line-height:1;flex-shrink:0;}
+  .cmp-name-navy{font-size:16px;font-weight:800;color:var(--navy);flex:1;line-height:1.3;}
+  .cmp-chips{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;}
+  .cmp-chip{display:flex;flex-direction:column;align-items:center;background:#fff;border:2px solid #E8DCC8;border-radius:14px;padding:10px 18px;min-width:80px;position:relative;box-shadow:0 2px 8px rgba(27,42,74,.06);transition:border-color .2s,box-shadow .2s;}
+  .cmp-chip:hover{border-color:#D1C4B0;box-shadow:0 3px 12px rgba(27,42,74,.1);}
+  .cmp-chip-val{font-size:15px;font-weight:900;color:var(--navy);}
+  .cmp-chip-label{font-size:10px;color:var(--text2);margin-top:2px;font-weight:600;letter-spacing:.3px;}
+  .cmp-chip-score{cursor:pointer;border-color:var(--accent);background:rgba(244,140,10,.04);}
+  .cmp-chip-score:hover{border-color:var(--accent);box-shadow:0 3px 14px rgba(244,140,10,.22);}
+  .cmp-chip-score .cmp-chip-val{color:var(--accent);}
+  .cmp-score-dropdown{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#fff;border-radius:12px;padding:12px 16px;box-shadow:0 8px 28px rgba(0,0,0,.16);border:1px solid var(--border);display:none;z-index:9999;min-width:230px;white-space:nowrap;}
+  .cmp-score-dropdown::after{content:"";position:absolute;bottom:-6px;left:50%;margin-left:-6px;width:12px;height:12px;background:#fff;border-right:1px solid var(--border);border-bottom:1px solid var(--border);transform:rotate(45deg);}
+  .cmp-chip-score:hover .cmp-score-dropdown{display:block;}
+  .cmp-dd-title{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+  .cmp-dd-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+  .cmp-dd-label{font-size:11px;color:var(--text2);width:80px;flex-shrink:0;}
+  .cmp-dd-bar{flex:1;background:var(--border);border-radius:3px;height:5px;}
+  .cmp-dd-fill{background:var(--accent);border-radius:3px;height:5px;}
+  .cmp-dd-val{font-size:11px;font-weight:700;color:var(--text);width:28px;text-align:right;}
+  .cmp-body{display:grid;grid-template-columns:1fr 1fr;gap:0;padding:14px 20px 16px;}
+  .cmp-body-col{padding:0 10px;}
+  .cmp-body-col:first-child{border-right:1px solid var(--border);padding-left:0;}
+  .cmp-body-col:last-child{padding-right:0;}
+  .cmp-col-label{font-size:10px;font-weight:700;letter-spacing:.8px;margin-bottom:7px;text-transform:uppercase;}
+  .cmp-pros-label{color:#15803D;}
+  .cmp-cons-label{color:#DC2626;}
+  .cmp-pros-item,.cmp-cons-item{display:flex;align-items:flex-start;gap:6px;font-size:12px;line-height:1.5;margin-bottom:5px;color:var(--text);}
+  .cmp-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+  .cmp-dot-green{background:#16A34A;}
+  .cmp-dot-red{background:#DC2626;}
+  .cmp-links-row{display:flex;gap:6px;flex-wrap:wrap;padding:0 20px 14px;}
+  .cmp-link-btn{font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid var(--border);color:var(--navy);background:#fff;font-weight:600;text-decoration:none;transition:all .15s;display:inline-flex;align-items:center;gap:4px;}
+  .cmp-link-btn:hover{background:var(--navy);color:#fff;border-color:var(--navy);}
+  @media(max-width:650px){
+    .cmp-body{grid-template-columns:1fr;}
+    .cmp-body-col:first-child{border-right:none;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:12px;}
+  }
+
+  /* ── Food type filter ── */
+  .filter-type-row{margin-bottom:14px;text-align:center;padding-bottom:14px;border-bottom:1px solid var(--border);}
+  .filter-type-label{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;}
+  .type-btn-group{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+  .tbtn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:#fff;cursor:pointer;transition:all .2s;font-family:inherit;font-size:12px;font-weight:700;color:var(--text2);white-space:nowrap;}
+  .tbtn:hover{border-color:var(--accent);color:var(--accent);background:var(--bg3);}
+  .tbtn.active{background:var(--navy);border-color:var(--navy);color:#fff;box-shadow:0 2px 8px rgba(27,42,74,.25);}
+
+  /* ── Filter redesign ── */
+  .filter-header{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .filter-title{font-size:15px;font-weight:800;color:var(--text);text-align:center;}
+  .filter-summary-inline{font-size:13px;color:var(--text2);}
+  .filter-area-row{margin-bottom:14px;text-align:center;}
+  .area-btn-group{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;}
+  .abtn{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 0;border-radius:14px;border:2px solid var(--border);background:#fff;cursor:pointer;transition:all .2s;font-family:inherit;width:92px;flex-shrink:0;}
+  .abtn-icon{font-size:20px;line-height:1;}
+  .abtn-label{font-size:12px;font-weight:700;color:var(--text2);}
+  .abtn:hover{border-color:var(--accent);background:var(--bg3);}
+  .abtn.active{border-color:var(--accent);background:var(--accent);box-shadow:0 3px 10px rgba(244,140,10,.4);}
+  .abtn.active .abtn-label{color:#fff;}
+  .abtn.siam.active{background:var(--siam);border-color:var(--siam);box-shadow:0 3px 10px rgba(2,132,199,.3);}
+  .abtn.อารีย์.active{background:var(--ari);border-color:var(--ari);box-shadow:0 3px 10px rgba(22,163,74,.3);}
+  .abtn.ทองหล่อ.active{background:var(--tl);border-color:var(--tl);box-shadow:0 3px 10px rgba(217,119,6,.3);}
+  .abtn.อโศก.active{background:var(--asok);border-color:var(--asok);box-shadow:0 3px 10px rgba(219,39,119,.3);}
+  .abtn.พร้อมพงษ์.active{background:var(--pp);border-color:var(--pp);box-shadow:0 3px 10px rgba(124,58,237,.3);}
+  .filter-budget-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--border);justify-content:center;}
+  .filter-label-sm{font-size:13px;font-weight:700;color:var(--text2);}
+
+  /* ── Card redesign ── */
+  .card-header-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+  .card-medal-wrap{display:flex;flex-direction:column;align-items:center;gap:2px;}
+  .card-medal{font-size:36px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,.15));}
+  .card-rank-label{font-size:11px;font-weight:700;color:var(--text2);letter-spacing:.5px;}
+  .card-score-big{font-size:42px;font-weight:900;color:var(--accent);line-height:1;text-align:right;}
+  .card-score-denom{font-size:15px;font-weight:400;color:var(--text2);margin-left:2px;}
+  .card-name-big{font-size:19px;font-weight:900;color:var(--navy);line-height:1.3;margin-bottom:10px;cursor:pointer;transition:color .15s;}
+  .card-name-big:hover{color:var(--accent);}
+  .card-meta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .food-type-badge{display:inline-flex;align-items:center;gap:5px;background:var(--bg3);border:1.5px solid #FFE4CC;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;color:var(--text2);}
+  .card-stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;position:relative;}
+  .cstat{background:#fff;border-radius:12px;padding:12px 6px;text-align:center;border:2px solid #E8DCC8;box-shadow:0 2px 6px rgba(27,42,74,.06);transition:border-color .2s;}
+  .cstat-val{font-size:15px;font-weight:700;color:var(--navy);letter-spacing:-0.3px;}
+  .cstat-label{font-size:11px;color:var(--text2);margin-top:3px;font-weight:500;}
+  .card-strengths{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;}
+  .card-weaknesses{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+  .strength-row{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;background:#F0FDF4;border:1px solid #BBF7D0;border-radius:10px;padding:6px 12px;width:100%;}.weakness-row{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;background:#FFF5F5;border:1px solid #FECACA;border-radius:10px;padding:6px 12px;width:100%;}
+  .strength-dot{width:7px;height:7px;border-radius:50%;background:#16A34A;flex-shrink:0;}
+  .weakness-dot{width:7px;height:7px;border-radius:50%;background:#DC2626;flex-shrink:0;}
+  .strength-text{color:#14532D;}
+  .weakness-text{color:#7F1D1D;}
+  .card-reason-box{background:linear-gradient(135deg,var(--bg3) 0%,#FEF0C0 100%);border-left:3px solid var(--accent);border-radius:0 10px 10px 0;padding:11px 14px;margin:12px 0;}
+  .card-reason-label{font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+  .card-reason-text{font-size:12px;color:var(--text);line-height:1.6;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+  @media(max-width:580px){.card-stats-row{grid-template-columns:repeat(2,1fr);}.top3-grid{grid-template-columns:1fr;}}
+  /* Food background graphics */
+  .food-bg{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden;}
+  .fi{position:absolute;}
+  .container{position:relative;z-index:2;}
+  header .container{position:relative;z-index:1;}
+  /* Score bars tooltip on hover */
+  .score-hover-wrap{position:relative;display:block;cursor:pointer;z-index:50;}
+  .score-bars-tooltip{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#fff;border-radius:14px;padding:14px 16px;box-shadow:0 8px 28px rgba(0,0,0,.18);border:1px solid var(--border);display:none;z-index:9999;min-width:240px;white-space:nowrap;}
+  .score-bars-tooltip::before{content:"";position:absolute;bottom:-6px;left:50%;margin-left:-6px;width:12px;height:12px;background:#fff;border-right:1px solid var(--border);border-bottom:1px solid var(--border);transform:rotate(45deg);}
+  .score-hover-wrap:hover .score-bars-tooltip{display:block;z-index:9999;}
+  .score-bars-tooltip .card-section-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+  .score-hint{font-size:11px;color:var(--accent);margin-top:2px;display:block;font-weight:600;}
+
+
+  /* ── Price hover popup ── */
+  .price-chip-wrap{position:relative;display:inline-flex;}
+  .price-chip{display:flex;flex-direction:column;align-items:center;background:#fff;border:2px solid #E8DCC8;border-radius:14px;padding:10px 14px;min-width:80px;cursor:default;box-shadow:0 2px 8px rgba(27,42,74,.06);transition:border-color .2s,box-shadow .2s;}
+  .price-chip:hover{border-color:var(--accent);box-shadow:0 3px 14px rgba(244,140,10,.18);}
+  .price-chip-val{font-size:15px;font-weight:700;color:var(--navy);letter-spacing:-0.3px;}
+  .price-chip-label{font-size:10px;color:var(--text2);margin-top:2px;font-weight:600;}
+  .price-chip-hint{font-size:9px;color:var(--accent);font-weight:600;margin-top:1px;}
+  .price-popup-dd{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:#fff;border-radius:14px;padding:14px 18px;box-shadow:0 10px 32px rgba(0,0,0,.16);border:1.5px solid var(--border);display:none;z-index:9999;min-width:200px;white-space:nowrap;}
+  .price-popup-dd::after{content:"";position:absolute;bottom:-6px;left:50%;margin-left:-6px;width:12px;height:12px;background:#fff;border-right:1.5px solid var(--border);border-bottom:1.5px solid var(--border);transform:rotate(45deg);}
+  .price-chip-wrap:hover .price-popup-dd{display:block;}
+  .price-dd-title{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+  .price-dd-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #F5EDE0;font-size:12px;}
+  .price-dd-row:last-child{border-bottom:none;font-weight:800;color:var(--navy);}
+  .price-dd-pax{color:var(--text2);font-weight:600;}
+  .price-dd-range{color:var(--navy);font-weight:700;}
+
+  /* ── Restaurant name hover popup (table) ── */
+  .name-hover-wrap{position:relative;display:inline-block;cursor:pointer;}
+  .name-popup{position:absolute;top:calc(100% + 6px);left:0;background:#fff;border-radius:16px;box-shadow:0 12px 40px rgba(27,42,74,.18);border:1.5px solid var(--border);z-index:9999;min-width:250px;display:none;overflow:hidden;}
+  .name-hover-wrap:hover .name-popup{display:block;}
+  .name-popup-banner{width:100%;height:80px;display:flex;align-items:center;justify-content:center;gap:10px;}
+  .name-popup-banner-emoji{font-size:38px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.2));}
+  .name-popup-banner-txt{font-size:11px;font-weight:700;color:rgba(255,255,255,.9);}
+  .name-popup-body{padding:11px 14px 13px;}
+  .name-popup-title{font-size:13px;font-weight:900;color:var(--navy);margin-bottom:5px;line-height:1.3;}
+  .name-popup-meta{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:7px;}
+  .name-popup-stats{display:flex;gap:5px;font-size:11px;margin-bottom:8px;flex-wrap:wrap;}
+  .name-popup-stat{background:var(--bg3);border-radius:7px;padding:3px 8px;font-weight:700;color:var(--navy);}
+  .name-popup-links{display:flex;gap:5px;flex-wrap:wrap;}
+  .name-popup-link{font-size:11px;padding:5px 10px;border-radius:10px;border:1.5px solid var(--border);color:var(--navy);background:#fff;font-weight:600;text-decoration:none;transition:all .15s;flex:1;text-align:center;}
+  .name-popup-link:hover{background:var(--navy);color:#fff;border-color:var(--navy);}
+  /* popup fixed: always appear above/right, JS will adjust for edge cases */
+
+  /* Accordion */
+  .collapsible-header{cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:14px;padding:14px 20px;box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:0!important;transition:background .2s;}
+  .collapsible-header:hover{background:var(--bg3);}
+  .collapsible-chevron{font-size:13px;color:var(--text2);transition:transform .4s cubic-bezier(.4,0,.2,1);margin-left:auto;padding-left:12px;flex-shrink:0;}
+  .collapsible-header.open .collapsible-chevron{transform:rotate(180deg);}
+  .collapsible-body{height:0;overflow:hidden;opacity:0;transition:height .38s cubic-bezier(.4,0,.2,1),opacity .3s ease;}
+  .collapsible-body.open{opacity:1;}
+  .collapsible-body-inner{padding:14px 0 6px;}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+  HEADER
+═══════════════════════════════════════════════════ -->
+
+<div class="food-bg" aria-hidden="true">
+<!-- Steak top-right -->
+<svg class="fi" style="top:2%;right:5%;width:110px;transform:rotate(15deg);opacity:.09" viewBox="0 0 100 80" fill="none" stroke="#C8832A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 60 Q10 40 20 25 Q35 5 60 10 Q85 15 88 35 Q92 55 75 65 Q55 75 35 70 Z"/><path d="M35 55 Q25 45 30 32 Q40 18 58 22 Q74 26 76 40 Q78 54 65 60 Q50 66 38 60 Z"/><path d="M45 45 Q42 38 48 34 M55 48 Q52 40 58 37"/><path d="M15 62 Q8 58 5 50 Q3 42 8 36"/><path d="M82 68 Q90 62 92 54"/></svg>
+<!-- Ramen bowl left -->
+<svg class="fi" style="top:18%;left:2%;width:95px;transform:rotate(-12deg);opacity:.08" viewBox="0 0 90 80" fill="none" stroke="#C8832A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="45" cy="50" rx="32" ry="14"/><path d="M13 50 C13 68 77 68 77 50"/><path d="M22 50 C22 36 28 28 45 28 C62 28 68 36 68 50"/><path d="M30 38 Q34 31 38 38"/><path d="M40 36 Q45 28 50 36"/><path d="M52 38 Q56 31 60 38"/><path d="M33 58 L35 64 M45 59 L45 65 M57 58 L55 64"/></svg>
+<!-- Croissant top-left -->
+<svg class="fi" style="top:5%;left:6%;width:85px;transform:rotate(20deg);opacity:.08" viewBox="0 0 100 70" fill="none" stroke="#C8832A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 55 Q5 35 20 15 Q35 2 55 8 Q70 13 75 28 Q78 40 68 50 Q55 62 38 60 Z"/><path d="M20 50 Q14 34 24 18 Q36 6 52 12 Q65 17 68 30 Q70 42 62 50"/><path d="M80 48 Q90 38 88 25 Q86 14 78 10 L75 28"/><path d="M15 55 Q8 60 12 68 Q18 72 24 65 L38 60"/><path d="M30 35 Q35 28 42 32 M48 30 Q54 24 60 28"/></svg>
+<!-- Donut right-middle -->
+<svg class="fi" style="top:38%;right:2%;width:88px;transform:rotate(-8deg);opacity:.08" viewBox="0 0 80 80" fill="none" stroke="#C8832A" stroke-width="2" stroke-linecap="round"><circle cx="40" cy="40" r="30"/><circle cx="40" cy="40" r="13"/><path d="M18 28 Q12 40 18 54"/><path d="M60 28 Q68 40 62 54"/><path d="M28 12 Q40 7 54 14"/><path d="M26 68 Q40 74 56 68"/></svg>
+<!-- Fork left-middle -->
+<svg class="fi" style="top:42%;left:1%;width:52px;transform:rotate(-18deg);opacity:.08" viewBox="0 0 40 110" fill="none" stroke="#C8832A" stroke-width="2.5" stroke-linecap="round"><line x1="10" y1="5" x2="10" y2="38"/><line x1="20" y1="5" x2="20" y2="38"/><line x1="30" y1="5" x2="30" y2="38"/><path d="M10 38 Q20 50 20 60 L20 105"/><line x1="10" y1="5" x2="30" y2="5"/></svg>
+<!-- Spoon right-top -->
+<svg class="fi" style="top:28%;right:3%;width:48px;transform:rotate(22deg);opacity:.08" viewBox="0 0 40 110" fill="none" stroke="#C8832A" stroke-width="2.5" stroke-linecap="round"><ellipse cx="20" cy="18" rx="13" ry="17"/><line x1="20" y1="35" x2="20" y2="108"/></svg>
+<!-- Coffee cup bottom-right -->
+<svg class="fi" style="bottom:22%;right:4%;width:75px;transform:rotate(6deg);opacity:.09" viewBox="0 0 80 80" fill="none" stroke="#C8832A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 30 L18 65 Q18 70 25 70 L50 70 Q57 70 57 65 L60 30 Z"/><path d="M57 38 Q72 38 72 50 Q72 62 57 60"/><path d="M28 20 Q28 14 34 14 Q34 8 40 8 Q40 14 46 14 Q46 20 52 20"/><line x1="15" y1="30" x2="60" y2="30"/><line x1="12" y1="75" x2="63" y2="75"/></svg>
+<!-- Pizza slice bottom-left -->
+<svg class="fi" style="bottom:15%;left:3%;width:80px;transform:rotate(-14deg);opacity:.09" viewBox="0 0 80 80" fill="none" stroke="#C8832A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M40 8 L6 68 L74 68 Z"/><path d="M6 68 Q40 78 74 68"/><circle cx="28" cy="50" r="4"/><circle cx="52" cy="46" r="4"/><circle cx="40" cy="60" r="3.5"/><line x1="18" y1="36" x2="62" y2="36"/></svg>
+<!-- Apple top-center -->
+<svg class="fi" style="top:8%;left:44%;width:65px;transform:rotate(10deg);opacity:.07" viewBox="0 0 70 80" fill="none" stroke="#C8832A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M35 20 Q35 8 42 5"/><path d="M28 18 Q10 18 8 40 Q6 60 20 72 Q28 78 35 72 Q42 78 50 72 Q64 60 62 40 Q60 18 42 18 Z"/><path d="M35 18 Q35 40 35 72"/></svg>
+<!-- Broccoli bottom-center -->
+<svg class="fi" style="bottom:8%;left:40%;width:70px;transform:rotate(-10deg);opacity:.07" viewBox="0 0 70 80" fill="none" stroke="#C8832A" stroke-width="2" stroke-linecap="round"><circle cx="22" cy="25" r="14"/><circle cx="48" cy="22" r="13"/><circle cx="35" cy="18" r="12"/><path d="M22 38 L20 70 L50 70 L48 35"/><path d="M20 70 L50 70"/><path d="M26 55 Q35 52 44 55"/></svg>
+<!-- Star sparkle scattered -->
+<svg class="fi" style="top:52%;left:45%;width:28px;opacity:.1" viewBox="0 0 30 30" fill="none" stroke="#C8832A" stroke-width="2.5" stroke-linecap="round"><line x1="15" y1="2" x2="15" y2="28"/><line x1="2" y1="15" x2="28" y2="15"/><line x1="5" y1="5" x2="25" y2="25"/><line x1="25" y1="5" x2="5" y2="25"/></svg>
+<svg class="fi" style="top:12%;right:18%;width:22px;opacity:.09;transform:rotate(22deg)" viewBox="0 0 30 30" fill="none" stroke="#C8832A" stroke-width="2.5" stroke-linecap="round"><line x1="15" y1="2" x2="15" y2="28"/><line x1="2" y1="15" x2="28" y2="15"/><line x1="5" y1="5" x2="25" y2="25"/><line x1="25" y1="5" x2="5" y2="25"/></svg>
+<svg class="fi" style="bottom:32%;left:22%;width:24px;opacity:.08;transform:rotate(-15deg)" viewBox="0 0 30 30" fill="none" stroke="#C8832A" stroke-width="2.5" stroke-linecap="round"><line x1="15" y1="2" x2="15" y2="28"/><line x1="2" y1="15" x2="28" y2="15"/></svg>
+<!-- Fish -->
+<svg class="fi" style="bottom:42%;right:5%;width:80px;transform:rotate(8deg);opacity:.08" viewBox="0 0 90 60" fill="none" stroke="#C8832A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 30 Q25 10 55 20 Q70 25 80 30 Q70 35 55 40 Q25 50 10 30 Z"/><path d="M80 30 L92 18 L88 30 L92 42 Z"/><circle cx="28" cy="26" r="3"/><path d="M40 20 Q45 30 40 40"/><path d="M52 18 Q58 28 52 38"/></svg>
+</div>
+
+<header>
+<div class="container">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="header-badge">🤖 AI FOOD ASSISTANT</div>
+      <h1>หาร้านอาหาร<br><span class="h1-highlight">ทีม 8–12 คน</span></h1>
+      <p class="header-sub">วิเคราะห์จากข้อมูลจริง 100 ร้าน · 5 ย่าน · คะแนน 100 คะแนน</p>
+      <div class="header-areas">
+        <span class="area-pill siam-pill">🏬 สยาม</span>
+        <span class="area-pill ari-pill">🌿 อารีย์</span>
+        <span class="area-pill tl-pill">✨ ทองหล่อ</span>
+        <span class="area-pill asok-pill">🏙️ อโศก</span>
+        <span class="area-pill pp-pill">💜 พร้อมพงษ์</span>
+      </div>
+      <div class="header-bottom-row">
+        <div class="live-badge">
+          <span class="live-dot"></span>
+          <span>Live Data</span>
+          <span id="data-status">กำลังโหลด...</span>
+        </div>
+        <div class="header-meta-sm">
+          <span>📅 5 มิ.ย. 2569</span>
+          <span>👤 Oil (Areeya Aonsoi)</span>
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="header-stat-card">
+        <div class="hstat"><div class="hstat-num">100</div><div class="hstat-label">ร้านอาหาร</div></div>
+        <div class="hstat-divider"></div>
+        <div class="hstat"><div class="hstat-num">5</div><div class="hstat-label">ย่าน</div></div>
+        <div class="hstat-divider"></div>
+        <div class="hstat"><div class="hstat-num">6</div><div class="hstat-label">เกณฑ์</div></div>
+        <div class="hstat-divider"></div>
+        <div class="hstat"><div class="hstat-num">100</div><div class="hstat-label">คะแนนเต็ม</div></div>
+      </div>
+      <div class="header-emoji">🍽️</div>
+    </div>
+  </div>
+</div>
+</header>
+
+<div class="container">
+
+<div class="accordion-group">
+<!-- เป้าหมาย -->
+<div>
+  <h2 class="collapsible-header" onclick="toggleSection(this)">เป้าหมาย <span class="collapsible-chevron">▼</span></h2>
+  <div class="collapsible-body">
+  <div class="collapsible-body-inner"><div class="grid-2">
+    <div class="info-box">
+      <h3>🎯 โจทย์ที่ต้องแก้</h3>
+      <p style="color:var(--text2);font-size:14px;margin-top:8px;">ทีม 8–12 คนต้องเลือกร้านอาหารสำหรับมื้อค่ำหลังเลิกงาน ต้องการข้อมูลจริง รีวิวจริง ไม่ใช่แค่ความรู้สึก</p>
+      <div style="margin-top:12px;padding:12px;background:var(--bg3);border-radius:8px;font-size:13px;border-left:3px solid var(--accent);">
+        <strong>คำถามที่ต้องตอบ:</strong><br>
+        ถ้าทีมต้องเลือกร้านอาหาร 1–3 ร้านจากพื้นที่ที่กำหนด ร้านไหนเหมาะที่สุด และเพราะอะไร?
+      </div>
+    </div>
+    <div class="info-box">
+      <h3>📊 สรุปผลการวิเคราะห์</h3>
+      <div class="stats-row" style="margin-top:12px;">
+        <div class="stat-item"><div class="stat-num">100</div><div class="stat-label">ร้านทั้งหมด</div></div>
+        <div class="stat-item"><div class="stat-num">5</div><div class="stat-label">ย่าน</div></div>
+        <div class="stat-item"><div class="stat-num">2</div><div class="stat-label">แหล่งข้อมูล</div></div>
+        <div class="stat-item"><div class="stat-num">100</div><div class="stat-label">คะแนนเต็ม</div></div>
+      </div>
+    </div>
+  </div></div>
+  </div>
+</div>
+<!-- ภาพรวม Workflow -->
+<div>
+  <h2 class="collapsible-header" onclick="toggleSection(this)">ภาพรวม Workflow <span class="collapsible-chevron">▼</span></h2>
+  <div class="collapsible-body">
+  <div class="collapsible-body-inner"><div style="background:var(--bg3);border:1px solid #FFE4CC;border-radius:12px;padding:24px;">
+    <div class="steps">
+      <div class="step"><div class="step-icon">🔍</div><div class="step-num">STEP 1</div><div class="step-title">ตั้งโจทย์</div><div class="step-sub">เลือกย่าน + เกณฑ์</div></div>
+      <div class="step"><div class="step-icon">🤖</div><div class="step-num">STEP 2</div><div class="step-title">Scraping</div><div class="step-sub">Apify Google Maps</div></div>
+      <div class="step"><div class="step-icon">📊</div><div class="step-num">STEP 3</div><div class="step-title">Google Sheets</div><div class="step-sub">Raw + Clean Data</div></div>
+      <div class="step"><div class="step-icon">🧹</div><div class="step-num">STEP 4</div><div class="step-title">Clean Data</div><div class="step-sub">Claude AI</div></div>
+      <div class="step"><div class="step-icon">⭐</div><div class="step-num">STEP 5</div><div class="step-title">Scoring</div><div class="step-sub">100 คะแนน</div></div>
+      <div class="step"><div class="step-icon">⚡</div><div class="step-num">STEP 6</div><div class="step-title">Automation</div><div class="step-sub">n8n Workflow</div></div>
+    </div>
+  </div></div>
+  </div>
+</div>
+<!-- เครื่องมือที่ใช้ -->
+<div>
+  <h2 class="collapsible-header" onclick="toggleSection(this)">เครื่องมือที่ใช้ <span class="collapsible-chevron">▼</span></h2>
+  <div class="collapsible-body">
+  <div class="collapsible-body-inner"><div class="tools-grid">
+    <div class="tool-chip"><span class="icon">🕷️</span><div><div class="label">Apify</div><div class="desc">Google Maps Scraper — เก็บข้อมูล 100 ร้าน</div></div></div>
+    <div class="tool-chip"><span class="icon">📊</span><div><div class="label">Google Sheets</div><div class="desc">Raw data, Clean data, Scoring</div></div></div>
+    <div class="tool-chip"><span class="icon">🧠</span><div><div class="label">Claude AI</div><div class="desc">Clean data, Scoring, Analysis, HTML</div></div></div>
+    <div class="tool-chip"><span class="icon">⚡</span><div><div class="label">n8n</div><div class="desc">Automation workflow — อัปเดตชีตอัตโนมัติ</div></div></div>
+    <div class="tool-chip"><span class="icon">🌐</span><div><div class="label">HTML / CSS / JS</div><div class="desc">Final report — หน้านี้</div></div></div>
+  </div></div>
+  </div>
+</div>
+<!-- เกณฑ์การให้คะแนน -->
+<div>
+  <h2 class="collapsible-header" onclick="toggleSection(this)">เกณฑ์การให้คะแนน (100 คะแนน) <span class="collapsible-chevron">▼</span></h2>
+  <div class="collapsible-body">
+  <div class="collapsible-body-inner"><div class="table-wrap">
+  <table class="scoring-table">
+    <tr><th>หมวด</th><th>น้ำหนัก</th><th>วิธีคำนวณ</th><th style="width:120px;">สัดส่วน</th></tr>
+    <tr><td><strong>S1</strong> Rating &amp; Review Quality</td><td>25 คะแนน</td><td>Rating × 15 + จำนวนรีวิว (log scale) × 10</td><td><div class="weight-bar"><div class="weight-fill" style="width:25%"></div></div></td></tr>
+    <tr><td><strong>S2</strong> Group Suitability</td><td>20 คะแนน</td><td>เหมาะมาก = 16–20 / เหมาะ = 11–15 / ไม่แนะนำ = 5</td><td><div class="weight-bar"><div class="weight-fill" style="width:20%"></div></div></td></tr>
+    <tr><td><strong>S3</strong> Price Suitability</td><td>15 คะแนน</td><td>฿฿ (200–499) = 12–15 / ฿ (&lt;200) = 11 / ฿฿฿ (500+) = 4–9</td><td><div class="weight-bar"><div class="weight-fill" style="width:15%"></div></div></td></tr>
+    <tr><td><strong>S4</strong> Travel Convenience</td><td>15 คะแนน</td><td>ในห้าง/BTS ตรง = 15 / อารีย์ = 12 / ทองหล่อ = 11</td><td><div class="weight-bar"><div class="weight-fill" style="width:15%"></div></div></td></tr>
+    <tr><td><strong>S5</strong> Data Completeness</td><td>15 คะแนน</td><td>สัดส่วน 10 fields ที่มีข้อมูลครบ × 15</td><td><div class="weight-bar"><div class="weight-fill" style="width:15%"></div></div></td></tr>
+    <tr><td><strong>S6</strong> Uniqueness / Experience</td><td>10 คะแนน</td><td>Michelin/unique = 10 / บุฟเฟต์/ชาบู = 9 / ทั่วไป = 6</td><td><div class="weight-bar"><div class="weight-fill" style="width:10%"></div></div></td></tr>
+    <tr style="font-weight:700;"><td>รวม</td><td>100 คะแนน</td><td></td><td></td></tr>
+  </table>
+  </div></div>
+  </div>
+</div>
+</div><!-- end accordion-group -->
+
+<!-- ═══════════════════════════════════════════════════
+  DATA SOURCES
+═══════════════════════════════════════════════════ -->
+<section>
+  <h2>แหล่งข้อมูล</h2>
+  <div class="grid-2">
+    <div class="info-box">
+      <h3>📍 Google Maps via Apify</h3>
+      <p style="font-size:13px;color:var(--text2);margin-top:8px;">ข้อมูลชื่อร้าน, ที่ตั้ง, rating, รีวิว, หมวดหมู่, เบอร์โทร, website จาก Google Maps crawler โดย Apify Actor: <code>compass/crawler-google-places</code></p>
+      <div style="margin-top:10px;"><span class="source-tag">✅ 100 ร้าน</span><span class="source-tag">📅 5 มิ.ย. 2569</span><span class="source-tag">🔗 Apify Dataset</span></div>
+    </div>
+    <div class="info-box">
+      <h3>📋 Google Sheets (Live)</h3>
+      <p style="font-size:13px;color:var(--text2);margin-top:8px;">ข้อมูล scoring และ clean data ถูกเก็บใน Google Sheets และ publish เป็น CSV สาธารณะ หน้านี้ดึงข้อมูลสดทุกครั้งที่เปิด</p>
+      <div style="margin-top:10px;">
+        <a href="https://docs.google.com/spreadsheets/d/1HuSCPfdU69ErCBKQ94ob0wOitbc0VaR6Cv5hIqdP-R0/edit" target="_blank" class="source-tag" style="color:var(--accent);">🔗 เปิด Google Sheets</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+  FILTER CONTROLS (sticky)
+═══════════════════════════════════════════════════ -->
+<section style="padding:16px 0 0;">
+  <div class="filter-bar" id="filter-bar">
+    <div class="filter-header">
+      <span class="filter-title">🔍 เลือกย่าน · ประเภทอาหาร · งบประมาณ</span>
+      <div id="filter-summary" class="filter-summary-inline"></div>
+    </div>
+    <div class="filter-area-row">
+      <div class="area-btn-group" id="area-filter">
+        <button class="abtn active" data-area="ทั้งหมด" onclick="setArea(this)"><span class="abtn-icon">🗺️</span><span class="abtn-label">ทั้งหมด</span></button>
+        <button class="abtn siam" data-area="สยาม" onclick="setArea(this)"><span class="abtn-icon">🏬</span><span class="abtn-label">สยาม</span></button>
+        <button class="abtn อารีย์" data-area="อารีย์" onclick="setArea(this)"><span class="abtn-icon">🌿</span><span class="abtn-label">อารีย์</span></button>
+        <button class="abtn ทองหล่อ" data-area="ทองหล่อ" onclick="setArea(this)"><span class="abtn-icon">✨</span><span class="abtn-label">ทองหล่อ</span></button>
+        <button class="abtn อโศก" data-area="อโศก" onclick="setArea(this)"><span class="abtn-icon">🏙️</span><span class="abtn-label">อโศก</span></button>
+        <button class="abtn พร้อมพงษ์" data-area="พร้อมพงษ์" onclick="setArea(this)"><span class="abtn-icon">💜</span><span class="abtn-label">พร้อมพงษ์</span></button>
+      </div>
+    </div>
+    <div class="filter-type-row">
+      <div class="filter-type-label">🍽️ ประเภทอาหาร</div>
+      <div class="type-btn-group" id="type-filter">
+        <button class="tbtn active" data-type="ทั้งหมด" onclick="setFoodType(this)">ทั้งหมด</button>
+      </div>
+    </div>
+    <div class="filter-budget-row">
+      <span class="filter-label-sm">💰 งบไม่เกิน</span>
+      <input type="number" id="budget-input" class="budget-input" placeholder="ไม่จำกัด" min="0" step="50" onchange="renderAll()">
+      <span class="filter-label-sm">บาท/คน</span>
+      <div class="btn-group">
+        <button class="btn" onclick="setBudget(200)">฿ &lt;200</button>
+        <button class="btn" onclick="setBudget(499)">฿฿ &lt;500</button>
+        <button class="btn" onclick="setBudget(0)">ทุกงบ</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+  TOP 3 CARDS
+═══════════════════════════════════════════════════ -->
+<section id="sec-top3">
+  <div style="margin-bottom:24px;">
+    <h2 class="section-h2">🏆 ร้านอาหารแนะนำ TOP 3 สำหรับทีม 8–12 คน <span id="top3-area-label" class="section-h2-sub">ทั้งหมด</span></h2>
+  </div>
+  <div class="top3-grid" id="top3-cards"></div>
+</section>
+
+<div style="height:2px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:8px 0;"></div>
+
+<!-- ═══════════════════════════════════════════════════
+  COMPARISON TOP 5
+═══════════════════════════════════════════════════ -->
+<section id="sec-compare" style="padding-top:48px;">
+  <div style="margin-bottom:24px;">
+    <h2 class="section-h2">⚖️ เปรียบเทียบ Top 5 <span id="compare-area-label" class="section-h2-sub">ทั้งหมด</span></h2>
+  </div>
+  <div id="compare-tbody"></div>
+</section>
+
+<div style="height:2px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:8px 0;"></div>
+
+<!-- ═══════════════════════════════════════════════════
+  RANKING TABLE
+═══════════════════════════════════════════════════ -->
+<section id="sec-rank" style="padding-top:48px;">
+  <div style="margin-bottom:24px;">
+    <h2 class="section-h2">📋 จัดอันดับทั้งหมด</h2>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;font-weight:600;color:var(--text2);">
+      แสดง:
+      <div class="btn-group" id="top-filter">
+        <button class="btn active" data-top="10" onclick="setTableTop(this)">10</button>
+        <button class="btn" data-top="20" onclick="setTableTop(this)">20</button>
+        <button class="btn" data-top="100" onclick="setTableTop(this)">ทั้งหมด</button>
+      </div>
+    </div>
+  </div>
+  <div class="table-wrap">
+  <table class="rank-table" id="rank-table">
+    <thead><tr>
+      <th>#</th>
+      <th>ร้าน</th>
+      <th>ประเภท</th>
+      <th>ย่าน</th>
+      <th>Rating</th>
+      <th>ราคา/คน</th>
+      <th>คะแนนรวม</th>
+      <th>S1</th><th>S2</th><th>S3</th><th>S4</th><th>S5</th><th>S6</th>
+      <th>Maps</th>
+    </tr></thead>
+    <tbody id="rank-tbody"></tbody>
+  </table>
+  </div>
+  <div id="rank-count" style="margin-top:10px;font-size:13px;color:var(--text2);"></div>
+</section>
+
+</div><!-- end container -->
+
+<footer>
+  <div>📊 ข้อมูลจาก Google Maps via Apify · วิเคราะห์โดย Claude AI · Workflow โดย Oil</div>
+  <div style="margin-top:6px;">
+    <a href="https://docs.google.com/spreadsheets/d/1HuSCPfdU69ErCBKQ94ob0wOitbc0VaR6Cv5hIqdP-R0/edit" target="_blank">🔗 Google Sheets</a>
+    &nbsp;·&nbsp;
+    <span>อัปเดตล่าสุด: <span id="last-updated">—</span></span>
+  </div>
+</footer>
+
+<!-- ═══════════════════════════════════════════════════
+  JAVASCRIPT
+═══════════════════════════════════════════════════ -->
+<script>
+const SHEET_ID = "1HuSCPfdU69ErCBKQ94ob0wOitbc0VaR6Cv5hIqdP-R0";
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJkFFnQvxKQVWwXqPgl_bB1dNr12Uji_dWa68zJUelUXmwbskSz4kddUY4HPCg4qssR1OQKe_KDs3g/pub?gid=1972517149&single=true&output=csv";
+
+// Embedded fallback data
+const FALLBACK = [{"rank": 1, "name": "TenTen ชาบู 4 สี หมีออนเซน", "area": "สยาม", "type": "ญี่ปุ่น", "rating": 4.8, "reviews": 5605, "priceTier": "฿฿ (200-499/คน)", "minPrice": 299, "s1": 23.0, "s2": 19.2, "s3": 15.0, "s4": 15.0, "s5": 15.0, "s6": 9.0, "total": 96.2, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=TenTen&query_place_id=ChIJOS7Ez9-f4jARk2lpG0azP2k", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 2, "name": "Hongdae", "area": "สยาม", "type": "เกาหลี", "rating": 4.8, "reviews": 5846, "priceTier": "฿฿ (200-499/คน)", "minPrice": 399, "s1": 23.0, "s2": 19.2, "s3": 13.0, "s4": 15.0, "s5": 13.5, "s6": 9.0, "total": 92.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Hongdae&query_place_id=ChIJkSRYFdKe4jARHuKV60eqRT4", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 3, "name": "BORNGA THAILAND", "area": "พร้อมพงษ์", "type": "เกาหลี", "rating": 4.8, "reviews": 4135, "priceTier": "฿฿ (200-499/คน)", "minPrice": 499, "s1": 23.0, "s2": 19.2, "s3": 12.0, "s4": 13.0, "s5": 15.0, "s6": 9.0, "total": 91.2, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=BORNGA%20THAILAND&query_place_id=ChIJbY7gF8Of4jARFyzLUFoqsuQ", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 4, "name": "Nabezo Premium (Siam Paragon)", "area": "สยาม", "type": "ญี่ปุ่น", "rating": 4.9, "reviews": 457, "priceTier": "฿฿ (200-499/คน)", "minPrice": 499, "s1": 20.5, "s2": 19.6, "s3": 12.0, "s4": 15.0, "s5": 15.0, "s6": 9.0, "total": 91.1, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Nabezo%20Premium%20(Siam%20Paragon)&query_place_id=ChIJ7dpjoBWf4jAR9BRCpA7t1Fg", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 5, "name": "KURATHAI SHOKUDO", "area": "พร้อมพงษ์", "type": "ญี่ปุ่น", "rating": 4.8, "reviews": 2026, "priceTier": "฿ (<200/คน)", "minPrice": 180, "s1": 21.5, "s2": 19.2, "s3": 11.0, "s4": 13.0, "s5": 15.0, "s6": 9.0, "total": 88.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=KURATHAI%20SHOKUDO&query_place_id=ChIJBTylA_6e4jAR0Mo6lqXgp-0", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 6, "name": "โกปี๊ฮับ ไพรม์ อารีย์", "area": "อารีย์", "type": "ติ่มซำ", "rating": 4.8, "reviews": 3430, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 23.0, "s2": 19.2, "s3": 11.0, "s4": 12.0, "s5": 15.0, "s6": 8.0, "total": 88.2, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%82%E0%B8%81%E0%B8%9B%E0%B8%B5%E0%B9%8A%E0%B8%AE%E0%B8%B1%E0%B8%9A+%E0%B9%84%E0%B8%9E%E0%B8%A3%E0%B8%A1%E0%B9%8C+%E0%B8%AD%E0%B8%B2%E0%B8%A3%E0%B8%B5%E0%B8%A2%E0%B9%8C&query_place_id=ChIJgdqs_tuf4jARl5VCETZn0do", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 7, "name": "คนละหม้อ Konlamoh", "area": "ทองหล่อ", "type": "บุฟเฟต์/ชาบู", "rating": 4.8, "reviews": 575, "priceTier": "฿฿ (200-499/คน)", "minPrice": 399, "s1": 20.5, "s2": 19.2, "s3": 13.0, "s4": 11.0, "s5": 15.0, "s6": 9.0, "total": 87.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%84%E0%B8%99%E0%B8%A5%E0%B8%B0%E0%B8%AB%E0%B8%A1%E0%B9%89%E0%B8%AD+Konlamoh&query_place_id=ChIJ45ZOFhif4jARvzx8AMBgj-c", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 8, "name": "จากึมซอง สยามสแควร์ วัน", "area": "สยาม", "type": "เกาหลี", "rating": 4.9, "reviews": 3473, "priceTier": "฿฿ (200-499/คน)", "minPrice": 399, "s1": 24.0, "s2": 14.6, "s3": 13.0, "s4": 14.0, "s5": 15.0, "s6": 7.0, "total": 87.6, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%88%E0%B8%B2%E0%B8%81%E0%B8%B6%E0%B8%A1%E0%B8%8B%E0%B8%AD%E0%B8%87+%E0%B8%AA%E0%B8%A2%E0%B8%B2%E0%B8%A1%E0%B8%AA%E0%B9%81%E0%B8%84%E0%B8%A7%E0%B8%A3%E0%B9%8C+%E0%B8%A7%E0%B8%B1%E0%B8%99&query_place_id=ChIJI9ZH5vGf4jAR4EfOG4k_M8c", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 9, "name": "ชาคาริช", "area": "ทองหล่อ", "type": "ญี่ปุ่น", "rating": 4.7, "reviews": 532, "priceTier": "฿฿ (200-499/คน)", "minPrice": 250, "s1": 19.5, "s2": 18.8, "s3": 14.0, "s4": 11.0, "s5": 15.0, "s6": 9.0, "total": 87.3, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%8A%E0%B8%B2%E0%B8%84%E0%B8%B2%E0%B8%A3%E0%B8%B4%E0%B8%8A&query_place_id=ChIJWY30I1Oe4jARlP_8fcdYYhw", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 10, "name": "ซูชิจูบัน สาขาอโศก", "area": "อโศก", "type": "ญี่ปุ่น", "rating": 4.9, "reviews": 2852, "priceTier": "฿฿ (200-499/คน)", "minPrice": 300, "s1": 22.5, "s2": 14.6, "s3": 15.0, "s4": 14.0, "s5": 15.0, "s6": 6.0, "total": 87.1, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%8B%E0%B8%B9%E0%B8%8A%E0%B8%B4%E0%B8%88%E0%B8%B9%E0%B8%9A%E0%B8%B1%E0%B8%99+%E0%B8%AA%E0%B8%B2%E0%B8%82%E0%B8%B2%E0%B8%AD%E0%B9%82%E0%B8%A8%E0%B8%81&query_place_id=ChIJf-5ObPue4jAROd8Q_RDSo3U", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 11, "name": "LIB STORY Thai BBQ & Local Food", "area": "อโศก", "type": "ไทย", "rating": 4.7, "reviews": 362, "priceTier": "฿฿ (200-499/คน)", "minPrice": 350, "s1": 18.5, "s2": 18.8, "s3": 15.0, "s4": 14.0, "s5": 13.5, "s6": 7.0, "total": 86.8, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=LIB+STORY+Thai+BBQ&query_place_id=ChIJ8YxZWVyf4jARCM43QDPqVw4", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 12, "name": "KOFUKU (โคฟุกุ)-Centerpoint Siam Square ชั้น 4", "area": "สยาม", "type": "ญี่ปุ่น", "rating": 4.8, "reviews": 1334, "priceTier": "฿฿ (200-499/คน)", "minPrice": 280, "s1": 21.5, "s2": 14.2, "s3": 15.0, "s4": 15.0, "s5": 15.0, "s6": 6.0, "total": 86.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=KOFUKU+Siam+Square&query_place_id=ChIJDcQcvpOf4jAR1EnsJgAoDDI", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 13, "name": "Kinroll - Ari", "area": "อารีย์", "type": "ญี่ปุ่น", "rating": 4.8, "reviews": 397, "priceTier": "฿฿ (200-499/คน)", "minPrice": 280, "s1": 19.5, "s2": 19.2, "s3": 15.0, "s4": 12.0, "s5": 15.0, "s6": 6.0, "total": 86.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Kinroll+Ari&query_place_id=ChIJXV78UEKd4jARC52Rr3NnqBY", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 14, "name": "JUMBO Seafood", "area": "สยาม", "type": "ทะเล/ซีฟู้ด", "rating": 4.7, "reviews": 1359, "priceTier": "฿฿฿ (500+/คน)", "minPrice": 600, "s1": 20.5, "s2": 18.8, "s3": 8.5, "s4": 14.0, "s5": 15.0, "s6": 9.0, "total": 85.8, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=JUMBO+Seafood&query_place_id=ChIJ1RFr30uf4jARe_3v9pOzVOw", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 15, "name": "Sunrise Tacos MEXICAN GRILL", "area": "อโศก", "type": "ตะวันตก/อินเตอร์", "rating": 4.7, "reviews": 5001, "priceTier": "฿฿ (200-499/คน)", "minPrice": 280, "s1": 22.0, "s2": 13.8, "s3": 15.0, "s4": 14.0, "s5": 15.0, "s6": 6.0, "total": 85.8, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Sunrise+Tacos&query_place_id=ChIJxaq1oeOe4jAROvyHinpPC-Q", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 16, "name": "เสวย เทอร์มินอล 21 อโศก", "area": "อโศก", "type": "ไทย", "rating": 4.6, "reviews": 3617, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 21.0, "s2": 18.4, "s3": 11.0, "s4": 14.0, "s5": 15.0, "s6": 6.0, "total": 85.4, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%80%E0%B8%AA%E0%B8%A7%E0%B8%A2+Terminal+21&query_place_id=ChIJ1afT-oif4jARvl-Fq22OydQ", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 17, "name": "MASA GARDEN by SUKI MASA", "area": "พร้อมพงษ์", "type": "ญี่ปุ่น", "rating": 4.6, "reviews": 442, "priceTier": "฿฿ (200-499/คน)", "minPrice": 499, "s1": 17.5, "s2": 18.4, "s3": 12.0, "s4": 13.0, "s5": 15.0, "s6": 9.0, "total": 84.9, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=MASA+GARDEN+SUKI+MASA&query_place_id=ChIJN6fweWWf4jAR-RXiH8_4YWs", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 18, "name": "Karimaki", "area": "อารีย์", "type": "ฟิวชั่น", "rating": 4.8, "reviews": 600, "priceTier": "฿฿ (200-499/คน)", "minPrice": 280, "s1": 20.5, "s2": 14.2, "s3": 15.0, "s4": 12.0, "s5": 15.0, "s6": 8.0, "total": 84.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Karimaki&query_place_id=ChIJOx5TRued4jARza9cfifO9WI", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 19, "name": "Kiani Korean Restaurant Thonglor", "area": "ทองหล่อ", "type": "เกาหลี", "rating": 4.8, "reviews": 1263, "priceTier": "฿฿ (200-499/คน)", "minPrice": 350, "s1": 21.5, "s2": 14.2, "s3": 15.0, "s4": 11.0, "s5": 15.0, "s6": 8.0, "total": 84.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Kiani+Korean+Thonglor&query_place_id=ChIJx6JXUqmf4jAR6tmg4xV65_A", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 20, "name": "เซนิกุเทน อารีย์", "area": "อารีย์", "type": "ญี่ปุ่น", "rating": 4.5, "reviews": 1512, "priceTier": "฿฿ (200-499/คน)", "minPrice": 499, "s1": 18.5, "s2": 18.0, "s3": 12.0, "s4": 12.0, "s5": 15.0, "s6": 9.0, "total": 84.5, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%80%E0%B8%8B%E0%B8%99%E0%B8%B4%E0%B8%81%E0%B8%B8%E0%B9%80%E0%B8%97%E0%B8%99+%E0%B8%AD%E0%B8%B2%E0%B8%A3%E0%B8%B5%E0%B8%A2%E0%B9%8C&query_place_id=ChIJ95SfUxyc4jARx8SwhPXpSBQ", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 21, "name": "นาราไทย คูซีน", "area": "อโศก", "type": "ไทย", "rating": 4.7, "reviews": 1134, "priceTier": "฿฿ (200-499/คน)", "minPrice": 200, "s1": 20.5, "s2": 13.8, "s3": 14.0, "s4": 15.0, "s5": 15.0, "s6": 6.0, "total": 84.3, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%99%E0%B8%B2%E0%B8%A3%E0%B8%B2%E0%B9%84%E0%B8%97%E0%B8%A2&query_place_id=ChIJ5UUPyu6f4jARzil2TMt0IZg", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 22, "name": "โค-ร-ต KORATA (Siam Square)", "area": "สยาม", "type": "ไทย", "rating": 4.9, "reviews": 2532, "priceTier": "฿ (<200/คน)", "minPrice": 200, "s1": 22.5, "s2": 14.6, "s3": 11.0, "s4": 14.0, "s5": 15.0, "s6": 7.0, "total": 84.1, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=KORATA+Siam+Square&query_place_id=ChIJ0xYxXwCf4jARPtJNOp_WXm8", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 23, "name": "ยากินิกุ ไลค์ เทอร์มินอล21 อโศก", "area": "อโศก", "type": "ญี่ปุ่น", "rating": 4.5, "reviews": 321, "priceTier": "฿฿ (200-499/คน)", "minPrice": 399, "s1": 16.5, "s2": 18.0, "s3": 13.0, "s4": 14.0, "s5": 13.5, "s6": 9.0, "total": 84.0, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%A2%E0%B8%B2%E0%B8%81%E0%B8%B4%E0%B8%99%E0%B8%B4%E0%B8%81%E0%B8%B8+Terminal21&query_place_id=ChIJ_Xa8krif4jARUoSVtZzHrU0", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 24, "name": "White Flower Factory - ครัวดอกไม้ขาว", "area": "สยาม", "type": "ไทย", "rating": 4.6, "reviews": 1521, "priceTier": "฿฿ (200-499/คน)", "minPrice": 200, "s1": 19.5, "s2": 13.4, "s3": 14.0, "s4": 15.0, "s5": 15.0, "s6": 7.0, "total": 83.9, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=White+Flower+Factory&query_place_id=ChIJ937RdtKe4jARPRuzBAQLNxc", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 25, "name": "Heisei Kushi Izakaya", "area": "ทองหล่อ", "type": "ญี่ปุ่น", "rating": 4.9, "reviews": 384, "priceTier": "฿฿ (200-499/คน)", "minPrice": 350, "s1": 20.5, "s2": 14.6, "s3": 15.0, "s4": 11.0, "s5": 13.5, "s6": 9.0, "total": 83.6, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Heisei+Kushi+Izakaya&query_place_id=ChIJze3TD4mf4jARpJcZ28HqRZ8", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 26, "name": "ร้านคานิเทงโกคุ สาขาอโศก", "area": "อโศก", "type": "ญี่ปุ่น", "rating": 4.9, "reviews": 388, "priceTier": "฿฿ (200-499/คน)", "minPrice": 380, "s1": 20.5, "s2": 14.6, "s3": 13.0, "s4": 14.0, "s5": 15.0, "s6": 6.0, "total": 83.1, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%84%E0%B8%B2%E0%B8%99%E0%B8%B4%E0%B9%80%E0%B8%97%E0%B8%87%E0%B9%82%E0%B8%81%E0%B8%84%E0%B8%B8+%E0%B8%AD%E0%B9%82%E0%B8%A8%E0%B8%81&query_place_id=ChIJ531oLMOf4jARBFnqHG-unag", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 27, "name": "Izakaya Reiwa", "area": "อารีย์", "type": "ญี่ปุ่น", "rating": 4.6, "reviews": 592, "priceTier": "฿฿ (200-499/คน)", "minPrice": 350, "s1": 18.5, "s2": 13.4, "s3": 15.0, "s4": 12.0, "s5": 15.0, "s6": 9.0, "total": 82.9, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Izakaya+Reiwa&query_place_id=ChIJ7XCbhCGd4jARFpyNOibOsLA", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 28, "name": "Piranya@Siam", "area": "สยาม", "type": "ไทย", "rating": 4.8, "reviews": 1462, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 21.5, "s2": 14.2, "s3": 11.0, "s4": 14.0, "s5": 15.0, "s6": 7.0, "total": 82.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Piranya+Siam&query_place_id=ChIJgX7MQtKe4jARWUtEd9dE3zs", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 29, "name": "Brooks brunch & bar Ari", "area": "อารีย์", "type": "ไทย", "rating": 4.8, "reviews": 1771, "priceTier": "฿฿ (200-499/คน)", "minPrice": 250, "s1": 21.5, "s2": 14.2, "s3": 14.0, "s4": 12.0, "s5": 15.0, "s6": 6.0, "total": 82.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Brooks+brunch+bar+Ari&query_place_id=ChIJh4PTdWyd4jARLZPuo5nt_q4", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 30, "name": "Ryoku Cafe", "area": "พร้อมพงษ์", "type": "อื่นๆ", "rating": 4.7, "reviews": 2573, "priceTier": "฿฿ (200-499/คน)", "minPrice": 250, "s1": 20.5, "s2": 13.8, "s3": 14.0, "s4": 13.0, "s5": 15.0, "s6": 6.0, "total": 82.3, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Ryoku+Cafe&query_place_id=ChIJa99RCDmd4jARv5vENrAty2s", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 31, "name": "Xiong Lao Han Malatang", "area": "พร้อมพงษ์", "type": "ตะวันตก/อินเตอร์", "rating": 4.9, "reviews": 68, "priceTier": "฿ (<200/คน)", "minPrice": 199, "s1": 19.0, "s2": 19.6, "s3": 11.0, "s4": 13.0, "s5": 13.5, "s6": 6.0, "total": 82.1, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Xiong+Lao+Han+Malatang&query_place_id=ChIJJ4q1wgOf4jAR2YRHmTfd7GE", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 32, "name": "Dae Jang Gum", "area": "อโศก", "type": "เกาหลี", "rating": 4.6, "reviews": 703, "priceTier": "฿฿ (200-499/คน)", "minPrice": 200, "s1": 18.5, "s2": 13.4, "s3": 14.0, "s4": 14.0, "s5": 15.0, "s6": 7.0, "total": 81.9, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Dae+Jang+Gum&query_place_id=ChIJIQBKyOSe4jARl9KvBH0Cb5c", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 33, "name": "โคเบะทนเทกิ พร้อมพงษ์", "area": "พร้อมพงษ์", "type": "ญี่ปุ่น", "rating": 4.6, "reviews": 1925, "priceTier": "฿฿ (200-499/คน)", "minPrice": 350, "s1": 19.5, "s2": 13.4, "s3": 15.0, "s4": 13.0, "s5": 15.0, "s6": 6.0, "total": 81.9, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%82%E0%B8%84%E0%B9%80%E0%B8%9A%E0%B8%B0%E0%B8%97%E0%B8%99%E0%B9%80%E0%B8%97%E0%B8%81%E0%B8%B4+%E0%B8%9E%E0%B8%A3%E0%B9%89%E0%B8%AD%E0%B8%A1%E0%B8%9E%E0%B8%87%E0%B8%A9%E0%B9%8C&query_place_id=ChIJ71MxUnKf4jAR_nrxq8_tPIM", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 34, "name": "เถียงนา เวียนนัวเซอรี", "area": "พร้อมพงษ์", "type": "ไทย", "rating": 4.6, "reviews": 791, "priceTier": "฿฿ (200-499/คน)", "minPrice": 350, "s1": 18.5, "s2": 13.4, "s3": 15.0, "s4": 13.0, "s5": 15.0, "s6": 7.0, "total": 81.9, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%80%E0%B8%96%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B8%99%E0%B8%B2&query_place_id=ChIJUZ_8zUaf4jARBefxod3IDMU", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 35, "name": "ร้านอาหารญี่ปุ่น โดรายะ", "area": "พร้อมพงษ์", "type": "ญี่ปุ่น", "rating": 4.8, "reviews": 305, "priceTier": "฿฿ (200-499/คน)", "minPrice": 200, "s1": 19.5, "s2": 14.2, "s3": 14.0, "s4": 13.0, "s5": 15.0, "s6": 6.0, "total": 81.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%82%E0%B8%94%E0%B8%A3%E0%B8%B2%E0%B8%A2%E0%B8%B0&query_place_id=ChIJsYRGOTWf4jARK5sQPFm5nSY", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 36, "name": "ONZON.EsarnRestaurantAri", "area": "อารีย์", "type": "ไทย", "rating": 4.9, "reviews": 188, "priceTier": "฿฿ (200-499/คน)", "minPrice": 200, "s1": 19.0, "s2": 14.6, "s3": 14.0, "s4": 12.0, "s5": 15.0, "s6": 7.0, "total": 81.6, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=ONZON+EsarnRestaurantAri&query_place_id=ChIJQegGWR2d4jAR7aY3KQiyvqo", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 37, "name": "UpperDeck by NangKwak", "area": "ทองหล่อ", "type": "ไทย", "rating": 4.9, "reviews": 68, "priceTier": "฿฿ (200-499/คน)", "minPrice": 200, "s1": 19.0, "s2": 14.6, "s3": 14.0, "s4": 11.0, "s5": 15.0, "s6": 8.0, "total": 81.6, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=UpperDeck+NangKwak&query_place_id=ChIJBxvFjqyf4jARfxiktJCJ-Cs", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 38, "name": "แมดโมอา อโศก", "area": "อโศก", "type": "อื่นๆ", "rating": 4.8, "reviews": 159, "priceTier": "฿฿ (200-499/คน)", "minPrice": 250, "s1": 18.0, "s2": 14.2, "s3": 14.0, "s4": 14.0, "s5": 15.0, "s6": 6.0, "total": 81.2, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%81%E0%B8%A1%E0%B8%94%E0%B9%82%E0%B8%A1%E0%B8%AD%E0%B8%B2+%E0%B8%AD%E0%B9%82%E0%B8%A8%E0%B8%81&query_place_id=ChIJgX-SHpqf4jARTZxC5FBJGwQ", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 39, "name": "Supanniga Eating Room Thonglor", "area": "ทองหล่อ", "type": "ไทย", "rating": 4.4, "reviews": 1727, "priceTier": "฿฿ (200-499/คน)", "minPrice": 350, "s1": 17.5, "s2": 12.6, "s3": 15.0, "s4": 11.0, "s5": 15.0, "s6": 10.0, "total": 81.1, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Supanniga+Eating+Room+Thonglor&query_place_id=ChIJYSgxk6yf4jAROxN8pCQzqJA", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 40, "name": "โซซาคุ อารีย์", "area": "อารีย์", "type": "ญี่ปุ่น", "rating": 4.6, "reviews": 1119, "priceTier": "฿฿ (200-499/คน)", "minPrice": 350, "s1": 19.5, "s2": 13.4, "s3": 15.0, "s4": 12.0, "s5": 15.0, "s6": 6.0, "total": 80.9, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%82%E0%B8%8B%E0%B8%8B%E0%B8%B2%E0%B8%84%E0%B8%B8+%E0%B8%AD%E0%B8%B2%E0%B8%A3%E0%B8%B5%E0%B8%A2%E0%B9%8C&query_place_id=ChIJs3BZdR2c4jARB8V8iANTx7o", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 41, "name": "เสือโหย ท่าสยาม", "area": "สยาม", "type": "ไทย", "rating": 4.9, "reviews": 2067, "priceTier": "฿ (<200/คน)", "minPrice": 70, "s1": 22.5, "s2": 14.6, "s3": 11.0, "s4": 14.0, "s5": 13.5, "s6": 5.0, "total": 80.6, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%80%E0%B8%AA%E0%B8%B7%E0%B8%AD%E0%B9%82%E0%B8%AB%E0%B8%A2+%E0%B8%97%E0%B9%88%E0%B8%B2%E0%B8%AA%E0%B8%A2%E0%B8%B2%E0%B8%A1&query_place_id=ChIJewJviWGf4jARYafHgFvNBE8", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 42, "name": "Tonchin Ramen - Siam Paragon", "area": "สยาม", "type": "ญี่ปุ่น", "rating": 4.7, "reviews": 1145, "priceTier": "฿ (<200/คน)", "minPrice": 180, "s1": 20.5, "s2": 13.8, "s3": 11.0, "s4": 15.0, "s5": 15.0, "s6": 5.0, "total": 80.3, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Tonchin+Ramen+Siam+Paragon&query_place_id=ChIJ8edPT6Cf4jARPWjsfL-eZtc", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 43, "name": "Indulge Restaurant & Cocktail Bar", "area": "พร้อมพงษ์", "type": "ไทย", "rating": 4.7, "reviews": 3690, "priceTier": "฿฿฿ (500+/คน)", "minPrice": 600, "s1": 22.0, "s2": 13.8, "s3": 8.5, "s4": 13.0, "s5": 15.0, "s6": 8.0, "total": 80.3, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Indulge+Restaurant+Bangkok&query_place_id=ChIJvcw2HuOe4jARNkjje3ATS18", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 44, "name": "ฮอกไกโด เก็นชิยากิ", "area": "พร้อมพงษ์", "type": "ญี่ปุ่น", "rating": 4.7, "reviews": 2719, "priceTier": "฿฿ (200-499/คน)", "minPrice": 499, "s1": 20.5, "s2": 13.8, "s3": 12.0, "s4": 13.0, "s5": 15.0, "s6": 6.0, "total": 80.3, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%AE%E0%B8%AD%E0%B8%81%E0%B9%84%E0%B8%81%E0%B9%82%E0%B8%94+%E0%B9%80%E0%B8%81%E0%B9%87%E0%B8%99%E0%B8%8A%E0%B8%B4%E0%B8%A2%E0%B8%B2%E0%B8%81%E0%B8%B4&query_place_id=ChIJcbm2Bgaf4jARaxjlvJg27Jo", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 45, "name": "Fishmonger Ari", "area": "อารีย์", "type": "ทะเล/ซีฟู้ด", "rating": 4.4, "reviews": 1017, "priceTier": "฿฿ (200-499/คน)", "minPrice": 350, "s1": 17.5, "s2": 12.6, "s3": 15.0, "s4": 12.0, "s5": 15.0, "s6": 8.0, "total": 80.1, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Fishmonger+Ari&query_place_id=ChIJi9oe0BSd4jARrjC1zDGgfb4", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 46, "name": "ซอยข่อยแน อาหารอีสานรสเด็ด", "area": "อารีย์", "type": "ไทย", "rating": 4.8, "reviews": 1934, "priceTier": "฿ (<200/คน)", "minPrice": 80, "s1": 21.5, "s2": 14.2, "s3": 11.0, "s4": 12.0, "s5": 15.0, "s6": 6.0, "total": 79.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%8B%E0%B8%AD%E0%B8%A2%E0%B8%82%E0%B9%88%E0%B8%AD%E0%B8%A2%E0%B9%81%E0%B8%99+%E0%B8%AD%E0%B8%B2%E0%B8%A3%E0%B8%B5%E0%B8%A2%E0%B9%8C&query_place_id=ChIJCUASixKd4jARVlbwIyGIplU", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 47, "name": "Paknang.bkk ปากนัง อาหารใต้", "area": "อารีย์", "type": "ไทย", "rating": 4.8, "reviews": 1340, "priceTier": "฿ (<200/คน)", "minPrice": 120, "s1": 21.5, "s2": 14.2, "s3": 11.0, "s4": 12.0, "s5": 15.0, "s6": 6.0, "total": 79.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Paknang+bkk&query_place_id=ChIJ10EjPQud4jARYSO1lfdgtAo", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 48, "name": "GaGa Udon House", "area": "พร้อมพงษ์", "type": "ญี่ปุ่น", "rating": 4.8, "reviews": 1604, "priceTier": "฿ (<200/คน)", "minPrice": 180, "s1": 21.5, "s2": 14.2, "s3": 11.0, "s4": 13.0, "s5": 15.0, "s6": 5.0, "total": 79.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=GaGa+Udon+House&query_place_id=ChIJ61IGKwSf4jARjDzkyrh6alg", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 49, "name": "เล ลาว - ร้านส้มตำรางวัลมิชลิน", "area": "อารีย์", "type": "ไทย", "rating": 4.5, "reviews": 2455, "priceTier": "฿ (<200/คน)", "minPrice": 120, "s1": 18.5, "s2": 13.0, "s3": 11.0, "s4": 12.0, "s5": 15.0, "s6": 10.0, "total": 79.5, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%80%E0%B8%A5+%E0%B8%A5%E0%B8%B2%E0%B8%A7+%E0%B8%A1%E0%B8%B4%E0%B8%8A%E0%B8%A5%E0%B8%B4%E0%B8%99&query_place_id=ChIJ44AEpx2c4jARZKaM12f1HQI", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 50, "name": "สมยงตำซั่ว สุขุมวิท-อโศก", "area": "อโศก", "type": "ไทย", "rating": 4.7, "reviews": 750, "priceTier": "฿ (<200/คน)", "minPrice": 80, "s1": 19.5, "s2": 13.8, "s3": 11.0, "s4": 14.0, "s5": 15.0, "s6": 6.0, "total": 79.3, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%AA%E0%B8%A1%E0%B8%A2%E0%B8%87%E0%B8%95%E0%B8%B3%E0%B8%8B%E0%B8%B1%E0%B9%88%E0%B8%A7+%E0%B8%AD%E0%B9%82%E0%B8%A8%E0%B8%81&query_place_id=ChIJtyENWqaf4jARAqfMnRP3xQY", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 51, "name": "อรรถรส", "area": "พร้อมพงษ์", "type": "ไทย", "rating": 4.4, "reviews": 1158, "priceTier": "฿฿ (200-499/คน)", "minPrice": 300, "s1": 17.5, "s2": 12.6, "s3": 15.0, "s4": 13.0, "s5": 15.0, "s6": 6.0, "total": 79.1, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%AD%E0%B8%A3%E0%B8%A3%E0%B8%96%E0%B8%A3%E0%B8%AA&query_place_id=ChIJ6b0f3_6e4jAR2YzyQaSGBqA", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 52, "name": "Cafe Temari", "area": "ทองหล่อ", "type": "ญี่ปุ่น", "rating": 4.8, "reviews": 381, "priceTier": "฿฿ (200-499/คน)", "minPrice": 200, "s1": 19.5, "s2": 14.2, "s3": 14.0, "s4": 11.0, "s5": 15.0, "s6": 5.0, "total": 78.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Cafe+Temari+Thonglor&query_place_id=ChIJ54w1fZOf4jARYNzUuwkdvMo", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 53, "name": "เคนชิน อิซากายะ สาขาอโศก", "area": "อโศก", "type": "ญี่ปุ่น", "rating": 4.3, "reviews": 1693, "priceTier": "฿฿ (200-499/คน)", "minPrice": 350, "s1": 16.5, "s2": 12.2, "s3": 15.0, "s4": 14.0, "s5": 15.0, "s6": 6.0, "total": 78.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%80%E0%B8%84%E0%B8%99%E0%B8%8A%E0%B8%B4%E0%B8%99+%E0%B8%AD%E0%B8%B4%E0%B8%8B%E0%B8%B2%E0%B8%81%E0%B8%B2%E0%B8%A2%E0%B8%B0+%E0%B8%AD%E0%B9%82%E0%B8%A8%E0%B8%81&query_place_id=ChIJRbk96-Se4jAR_aE0uywzTRM", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 54, "name": "โอ้กะจู๋ สาขาสยามสแควร์วัน", "area": "สยาม", "type": "ไทย", "rating": 4.4, "reviews": 1590, "priceTier": "฿฿ (200-499/คน)", "minPrice": 280, "s1": 17.5, "s2": 12.6, "s3": 15.0, "s4": 14.0, "s5": 13.5, "s6": 6.0, "total": 78.6, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%82%E0%B8%AD%E0%B9%89%E0%B8%81%E0%B8%B0%E0%B8%88%E0%B8%B9%E0%B9%8B+%E0%B8%AA%E0%B8%A2%E0%B8%B2%E0%B8%A1%E0%B8%AA%E0%B9%81%E0%B8%84%E0%B8%A7%E0%B8%A3%E0%B9%8C%E0%B8%A7%E0%B8%B1%E0%B8%99&query_place_id=ChIJV157mDGZ4jARrvO4db7HAvw", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 55, "name": "ครัวเจียงใหม่ - ทองหล่อ", "area": "ทองหล่อ", "type": "ไทย", "rating": 4.8, "reviews": 2745, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 21.5, "s2": 14.2, "s3": 11.0, "s4": 11.0, "s5": 13.5, "s6": 7.0, "total": 78.2, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%84%E0%B8%A3%E0%B8%B1%E0%B8%A7%E0%B9%80%E0%B8%88%E0%B8%B5%E0%B8%A2%E0%B8%87%E0%B9%83%E0%B8%AB%E0%B8%A1%E0%B9%88+%E0%B8%97%E0%B8%AD%E0%B8%87%E0%B8%AB%E0%B8%A5%E0%B9%88%E0%B8%AD&query_place_id=ChIJh7s6GVOe4jAReTmapQOwBQ0", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 56, "name": "Perb (เปิบ) อารีย์ ซอย1", "area": "อารีย์", "type": "ไทย", "rating": 4.4, "reviews": 291, "priceTier": "฿฿ (200-499/คน)", "minPrice": 280, "s1": 15.5, "s2": 12.6, "s3": 15.0, "s4": 12.0, "s5": 15.0, "s6": 8.0, "total": 78.1, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Perb+Ari&query_place_id=ChIJfSHBpP-d4jARMTq0BQWZu00", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 57, "name": "กันหม่าล่า - Gan Mala สาขาอโศก", "area": "อโศก", "type": "อื่นๆ", "rating": 4.9, "reviews": 201, "priceTier": "฿ (<200/คน)", "minPrice": 199, "s1": 20.5, "s2": 14.6, "s3": 11.0, "s4": 14.0, "s5": 12.0, "s6": 6.0, "total": 78.1, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%81%E0%B8%B1%E0%B8%99%E0%B8%AB%E0%B8%A1%E0%B9%88%E0%B8%B2%E0%B8%A5%E0%B9%88%E0%B8%B2+%E0%B8%AD%E0%B9%82%E0%B8%A8%E0%B8%81&query_place_id=ChIJ__PGTQCf4jARJcRsYGqXxWI", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 58, "name": "Kogoro Katsu - Siam Square", "area": "สยาม", "type": "ญี่ปุ่น", "rating": 4.6, "reviews": 668, "priceTier": "฿ (<200/คน)", "minPrice": 180, "s1": 18.5, "s2": 13.4, "s3": 11.0, "s4": 14.0, "s5": 15.0, "s6": 6.0, "total": 77.9, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Kogoro+Katsu+Siam+Square&query_place_id=ChIJKecafDif4jARJS68RoibFw4", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 59, "name": "Jones Salad Terminal 21 อโศก", "area": "อโศก", "type": "ไทย", "rating": 4.7, "reviews": 131, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 17.0, "s2": 13.8, "s3": 11.0, "s4": 15.0, "s5": 15.0, "s6": 6.0, "total": 77.8, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Jones+Salad+Terminal+21&query_place_id=ChIJo7sY1Kif4jARlPmw_GjmKOQ", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 60, "name": "Fuego", "area": "ทองหล่อ", "type": "ตะวันตก/อินเตอร์", "rating": 4.8, "reviews": 622, "priceTier": "฿฿฿ (500+/คน)", "minPrice": 500, "s1": 20.5, "s2": 14.2, "s3": 9.0, "s4": 11.0, "s5": 15.0, "s6": 8.0, "total": 77.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Fuego+Thonglor&query_place_id=ChIJN7fHY7Gf4jAR8jjTD8UA81k", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 61, "name": "เปย์ ทองหล่อ", "area": "ทองหล่อ", "type": "ไทย", "rating": 5.0, "reviews": 34, "priceTier": "฿฿ (200-499/คน)", "minPrice": 200, "s1": 18.0, "s2": 15.0, "s3": 14.0, "s4": 11.0, "s5": 13.5, "s6": 6.0, "total": 77.5, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%80%E0%B8%9B%E0%B8%A2%E0%B9%8C+%E0%B8%97%E0%B8%AD%E0%B8%87%E0%B8%AB%E0%B8%A5%E0%B9%88%E0%B8%AD&query_place_id=ChIJkVlkQDef4jARHRku6JLsnCU", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 62, "name": "Miss Siam Restaurant", "area": "สยาม", "type": "ไทย", "rating": 4.7, "reviews": 49, "priceTier": "฿฿ (200-499/คน)", "minPrice": 280, "s1": 15.0, "s2": 13.8, "s3": 15.0, "s4": 14.0, "s5": 13.5, "s6": 6.0, "total": 77.3, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Miss+Siam+Restaurant&query_place_id=ChIJ3-VagW6f4jARTZSahLdTbfM", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 63, "name": "คิทเช่น นีงาตะ", "area": "พร้อมพงษ์", "type": "ญี่ปุ่น", "rating": 4.4, "reviews": 860, "priceTier": "฿฿ (200-499/คน)", "minPrice": 250, "s1": 16.5, "s2": 12.6, "s3": 14.0, "s4": 13.0, "s5": 15.0, "s6": 6.0, "total": 77.1, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%84%E0%B8%B4%E0%B8%97%E0%B9%80%E0%B8%8A%E0%B9%88%E0%B8%99+%E0%B8%99%E0%B8%B5%E0%B8%87%E0%B8%B2%E0%B8%95%E0%B8%B0&query_place_id=ChIJ_bM4DAGf4jARc38gwmaKOSo", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 64, "name": "ปิง หูฉลาม อโศก", "area": "อโศก", "type": "ทะเล/ซีฟู้ด", "rating": 4.6, "reviews": 1593, "priceTier": "฿฿฿ (500+/คน)", "minPrice": 500, "s1": 19.5, "s2": 13.4, "s3": 9.0, "s4": 14.0, "s5": 15.0, "s6": 6.0, "total": 76.9, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%9B%E0%B8%B4%E0%B8%87+%E0%B8%AB%E0%B8%B9%E0%B8%89%E0%B8%A5%E0%B8%B2%E0%B8%A1+%E0%B8%AD%E0%B9%82%E0%B8%A8%E0%B8%81&query_place_id=ChIJnfQQnAGf4jARkEY6N_nZR74", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 65, "name": "ร้านอาหารไทย ภัทรา", "area": "ทองหล่อ", "type": "ไทย", "rating": 4.5, "reviews": 656, "priceTier": "฿฿ (200-499/คน)", "minPrice": 200, "s1": 17.5, "s2": 13.0, "s3": 14.0, "s4": 11.0, "s5": 15.0, "s6": 6.0, "total": 76.5, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%A3%E0%B9%89%E0%B8%B2%E0%B8%99%E0%B8%AD%E0%B8%B2%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B9%84%E0%B8%97%E0%B8%A2+%E0%B8%A0%E0%B8%B1%E0%B8%97%E0%B8%A3%E0%B8%B2&query_place_id=ChIJv99arlOe4jARCJI52pBehiQ", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 66, "name": "คิตะโอจิ ทองหล่อ", "area": "ทองหล่อ", "type": "ญี่ปุ่น", "rating": 4.5, "reviews": 416, "priceTier": "฿฿ (200-499/คน)", "minPrice": 300, "s1": 16.5, "s2": 13.0, "s3": 15.0, "s4": 11.0, "s5": 15.0, "s6": 6.0, "total": 76.5, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%84%E0%B8%B4%E0%B8%95%E0%B8%B0%E0%B9%82%E0%B8%AD%E0%B8%88%E0%B8%B4+%E0%B8%97%E0%B8%AD%E0%B8%87%E0%B8%AB%E0%B8%A5%E0%B9%88%E0%B8%AD&query_place_id=ChIJRUMLwayf4jARE-aLqeECWx8", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 67, "name": "Thai Thai Boat Noodles Terminal 21", "area": "อโศก", "type": "ไทย", "rating": 4.5, "reviews": 631, "priceTier": "฿ (<200/คน)", "minPrice": 80, "s1": 17.5, "s2": 13.0, "s3": 11.0, "s4": 15.0, "s5": 15.0, "s6": 5.0, "total": 76.5, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Thai+Thai+Boat+Noodles+Terminal+21&query_place_id=ChIJ4zwpQ2af4jAReRREq3JTfCY", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 68, "name": "Metro Square SiamParagon", "area": "สยาม", "type": "ไทย", "rating": 4.7, "reviews": 891, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 19.5, "s2": 13.8, "s3": 11.0, "s4": 14.0, "s5": 12.0, "s6": 6.0, "total": 76.3, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Metro+Square+SiamParagon&query_place_id=ChIJYQPi8O-f4jAR6FrlIol3hGw", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 69, "name": "อีหล่า อีสานกายะ ทองหล่อ", "area": "ทองหล่อ", "type": "ญี่ปุ่น", "rating": 4.7, "reviews": 858, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 19.5, "s2": 13.8, "s3": 11.0, "s4": 11.0, "s5": 15.0, "s6": 6.0, "total": 76.3, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%AD%E0%B8%B5%E0%B8%AB%E0%B8%A5%E0%B9%88%E0%B8%B2+%E0%B8%97%E0%B8%AD%E0%B8%87%E0%B8%AB%E0%B8%A5%E0%B9%88%E0%B8%AD&query_place_id=ChIJd5ObZC-f4jARnQKOFsQbVHM", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 70, "name": "Tsuru Udon Phrom Phong 39", "area": "พร้อมพงษ์", "type": "ญี่ปุ่น", "rating": 4.8, "reviews": 130, "priceTier": "฿ (<200/คน)", "minPrice": 180, "s1": 18.0, "s2": 14.2, "s3": 11.0, "s4": 13.0, "s5": 15.0, "s6": 5.0, "total": 76.2, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Tsuru+Udon+Phrom+Phong&query_place_id=ChIJ-y8hrU6f4jARjdq32Qy-rdE", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 71, "name": "อีท แอม อา อาคาร 253 อโศก", "area": "อโศก", "type": "อื่นๆ", "rating": 4.5, "reviews": 1441, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 18.5, "s2": 13.0, "s3": 11.0, "s4": 14.0, "s5": 13.5, "s6": 6.0, "total": 76.0, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%AD%E0%B8%B5%E0%B8%97+%E0%B9%81%E0%B8%AD%E0%B8%A1+%E0%B8%AD%E0%B8%B2+253+%E0%B8%AD%E0%B9%82%E0%B8%A8%E0%B8%81&query_place_id=ChIJtz6LEiOf4jARORWzcrLDLBc", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 72, "name": "โอฮาชิ บูตะดง", "area": "อารีย์", "type": "ญี่ปุ่น", "rating": 4.6, "reviews": 724, "priceTier": "฿ (<200/คน)", "minPrice": 120, "s1": 18.5, "s2": 13.4, "s3": 11.0, "s4": 12.0, "s5": 15.0, "s6": 6.0, "total": 75.9, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%82%E0%B8%AD%E0%B8%AE%E0%B8%B2%E0%B8%8A%E0%B8%B4+%E0%B8%9A%E0%B8%B9%E0%B8%95%E0%B8%B0%E0%B8%94%E0%B8%87&query_place_id=ChIJVSxzD0qd4jARMabSetrkBJo", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 73, "name": "บ้านไอซ์ สาขา ทองหล่อ", "area": "ทองหล่อ", "type": "ไทย", "rating": 4.6, "reviews": 1974, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 19.5, "s2": 13.4, "s3": 11.0, "s4": 11.0, "s5": 15.0, "s6": 6.0, "total": 75.9, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%9A%E0%B9%89%E0%B8%B2%E0%B8%99%E0%B9%84%E0%B8%AD%E0%B8%8B%E0%B9%8C+%E0%B8%97%E0%B8%AD%E0%B8%87%E0%B8%AB%E0%B8%A5%E0%B9%88%E0%B8%AD&query_place_id=ChIJKaihd6yf4jARJboSwdnH7sw", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 74, "name": "Have a Zeed - Terminal 21 Asoke", "area": "อโศก", "type": "ไทย", "rating": 4.1, "reviews": 1964, "priceTier": "฿฿ (200-499/คน)", "minPrice": 200, "s1": 14.5, "s2": 11.4, "s3": 14.0, "s4": 15.0, "s5": 15.0, "s6": 6.0, "total": 75.9, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Have+a+Zeed+Terminal+21&query_place_id=ChIJ9eldoOOe4jARMJiqUgk_9HA", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 75, "name": "ข้าวหน้าปลาไหล นารุเสะ พร้อมพงษ์", "area": "พร้อมพงษ์", "type": "ญี่ปุ่น", "rating": 4.7, "reviews": 62, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 17.0, "s2": 13.8, "s3": 11.0, "s4": 13.0, "s5": 15.0, "s6": 6.0, "total": 75.8, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%82%E0%B9%89%E0%B8%B2%E0%B8%A7%E0%B8%AB%E0%B8%99%E0%B9%89%E0%B8%B2%E0%B8%9B%E0%B8%A5%E0%B8%B2%E0%B9%84%E0%B8%AB%E0%B8%A5+%E0%B8%9E%E0%B8%A3%E0%B9%89%E0%B8%AD%E0%B8%A1%E0%B8%9E%E0%B8%87%E0%B8%A9%E0%B9%8C&query_place_id=ChIJ95eQBgCf4jARWMYKTnI6JR0", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 76, "name": "Khao yiphun", "area": "พร้อมพงษ์", "type": "ญี่ปุ่น", "rating": 4.4, "reviews": 187, "priceTier": "฿฿ (200-499/คน)", "minPrice": 280, "s1": 14.0, "s2": 12.6, "s3": 15.0, "s4": 13.0, "s5": 15.0, "s6": 6.0, "total": 75.6, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Khao+yiphun&query_place_id=ChIJZRAZu0Sf4jARccr1AFdQAtk", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 77, "name": "ต้นโอ๊ก", "area": "สยาม", "type": "ไทย", "rating": 4.5, "reviews": 305, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 16.5, "s2": 13.0, "s3": 11.0, "s4": 14.0, "s5": 15.0, "s6": 6.0, "total": 75.5, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%95%E0%B9%89%E0%B8%99%E0%B9%82%E0%B8%AD%E0%B9%8A%E0%B8%81&query_place_id=ChIJmRfAQNKe4jARRomB784P5g0", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 78, "name": "NICO NICO - Café & Brunch Place", "area": "ทองหล่อ", "type": "อื่นๆ", "rating": 4.5, "reviews": 424, "priceTier": "฿฿ (200-499/คน)", "minPrice": 250, "s1": 16.5, "s2": 13.0, "s3": 14.0, "s4": 11.0, "s5": 15.0, "s6": 6.0, "total": 75.5, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=NICO+NICO+Cafe+Brunch+Thonglor&query_place_id=ChIJK0oh-fqf4jAR-70cq-12UNY", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 79, "name": "AROON cafe", "area": "อโศก", "type": "ไทย", "rating": 4.6, "reviews": 266, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 17.5, "s2": 13.4, "s3": 11.0, "s4": 14.0, "s5": 13.5, "s6": 6.0, "total": 75.4, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=AROON+cafe&query_place_id=ChIJp7wxhyqf4jARHQ5N_NseXrA", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 80, "name": "Mellow Thong Lo", "area": "ทองหล่อ", "type": "ไทย", "rating": 4.4, "reviews": 589, "priceTier": "฿฿ (200-499/คน)", "minPrice": 200, "s1": 16.5, "s2": 12.6, "s3": 14.0, "s4": 11.0, "s5": 15.0, "s6": 6.0, "total": 75.1, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Mellow+Thong+Lo&query_place_id=ChIJkxPaAlOe4jARSq4RQholm-I", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 81, "name": "โรซาโน อิตาเลียน คูซีน", "area": "อโศก", "type": "ตะวันตก/อินเตอร์", "rating": 4.5, "reviews": 1137, "priceTier": "฿฿฿ (500+/คน)", "minPrice": 600, "s1": 18.5, "s2": 13.0, "s3": 8.5, "s4": 14.0, "s5": 15.0, "s6": 6.0, "total": 75.0, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%82%E0%B8%A3%E0%B8%8B%E0%B8%B2%E0%B9%82%E0%B8%99+%E0%B8%AD%E0%B8%B4%E0%B8%95%E0%B8%B2%E0%B9%80%E0%B8%A5%E0%B8%B5%E0%B8%A2%E0%B8%99+%E0%B8%84%E0%B8%B9%E0%B8%8B%E0%B8%B5%E0%B8%99&query_place_id=ChIJge5RZOOe4jARzWYZ3jGvKbA", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 82, "name": "แซ่บสุดใจ อารีย์", "area": "อารีย์", "type": "ไทย", "rating": 4.8, "reviews": 160, "priceTier": "฿ (<200/คน)", "minPrice": 100, "s1": 18.0, "s2": 14.2, "s3": 11.0, "s4": 12.0, "s5": 13.5, "s6": 6.0, "total": 74.7, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%81%E0%B8%8B%E0%B9%88%E0%B8%9A%E0%B8%AA%E0%B8%B8%E0%B8%94%E0%B9%83%E0%B8%88+%E0%B8%AD%E0%B8%B2%E0%B8%A3%E0%B8%B5%E0%B8%A2%E0%B9%8C&query_place_id=ChIJhfXpIFOd4jAR9JEXzMGBXqw", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 83, "name": "Somtam", "area": "สยาม", "type": "ไทย", "rating": 4.9, "reviews": 39, "priceTier": "฿ (<200/คน)", "minPrice": 80, "s1": 17.0, "s2": 14.6, "s3": 11.0, "s4": 14.0, "s5": 12.0, "s6": 6.0, "total": 74.6, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Somtam+Siam&query_place_id=ChIJj6WfjQWf4jARZjxOhCHCyrU", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 84, "name": "เพลินพุง Noodles & More สยามสแควร์วัน", "area": "สยาม", "type": "ไทย", "rating": 4.4, "reviews": 726, "priceTier": "฿ (<200/คน)", "minPrice": 80, "s1": 16.5, "s2": 12.6, "s3": 11.0, "s4": 15.0, "s5": 13.5, "s6": 6.0, "total": 74.6, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B9%80%E0%B8%9E%E0%B8%A5%E0%B8%B4%E0%B8%99%E0%B8%9E%E0%B8%B8%E0%B8%87+%E0%B8%AA%E0%B8%A2%E0%B8%B2%E0%B8%A1%E0%B8%AA%E0%B9%81%E0%B8%84%E0%B8%A7%E0%B8%A3%E0%B9%8C%E0%B8%A7%E0%B8%B1%E0%B8%99&query_place_id=ChIJ1Uu7FtKe4jARgx25ZPYFGbQ", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 85, "name": "คั่วกลิ้ง ผักสด ทองหล่อ", "area": "ทองหล่อ", "type": "ไทย", "rating": 4.5, "reviews": 1508, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 18.5, "s2": 13.0, "s3": 11.0, "s4": 11.0, "s5": 15.0, "s6": 6.0, "total": 74.5, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%84%E0%B8%B1%E0%B9%88%E0%B8%A7%E0%B8%81%E0%B8%A5%E0%B8%B4%E0%B9%89%E0%B8%87+%E0%B8%9C%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%94+%E0%B8%97%E0%B8%AD%E0%B8%87%E0%B8%AB%E0%B8%A5%E0%B9%88%E0%B8%AD&query_place_id=ChIJe26gkKuf4jARIiXTKzB4REo", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 86, "name": "DonDon", "area": "พร้อมพงษ์", "type": "ญี่ปุ่น", "rating": 4.4, "reviews": 620, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 16.5, "s2": 12.6, "s3": 11.0, "s4": 13.0, "s5": 15.0, "s6": 6.0, "total": 74.1, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=DonDon+Phrom+Phong&query_place_id=ChIJa1XjTvie4jARo7-R-96VpYA", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 87, "name": "KIN DONBURI สยามสแควร์วัน", "area": "สยาม", "type": "ญี่ปุ่น", "rating": 4.6, "reviews": 73, "priceTier": "฿ (<200/คน)", "minPrice": 120, "s1": 16.0, "s2": 13.4, "s3": 11.0, "s4": 15.0, "s5": 13.5, "s6": 5.0, "total": 73.9, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=KIN+DONBURI+Siam+Square&query_place_id=ChIJsdoxk1mf4jARMCvxdE4TJaM", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 88, "name": "อร่อย อารีย์ Aroi Ari", "area": "อารีย์", "type": "ไทย", "rating": 4.6, "reviews": 129, "priceTier": "฿ (<200/คน)", "minPrice": 120, "s1": 16.0, "s2": 13.4, "s3": 11.0, "s4": 12.0, "s5": 15.0, "s6": 6.0, "total": 73.4, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%AD%E0%B8%A3%E0%B9%88%E0%B8%AD%E0%B8%A2+%E0%B8%AD%E0%B8%B2%E0%B8%A3%E0%B8%B5%E0%B8%A2%E0%B9%8C&query_place_id=ChIJtQHqWQCf4jAR-2V0KYCFLw4", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 89, "name": "อิโมยะ", "area": "พร้อมพงษ์", "type": "ญี่ปุ่น", "rating": 4.4, "reviews": 504, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 16.5, "s2": 12.6, "s3": 11.0, "s4": 13.0, "s5": 13.5, "s6": 6.0, "total": 72.6, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%AD%E0%B8%B4%E0%B9%82%E0%B8%A1%E0%B8%A2%E0%B8%B0&query_place_id=ChIJaeqJggGf4jARnt6aEriP2vE", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 90, "name": "ROAST coffee & eatery", "area": "ทองหล่อ", "type": "ไทย", "rating": 4.5, "reviews": 2802, "priceTier": "฿฿ (200-499/คน)", "minPrice": 280, "s1": 18.5, "s2": 5.0, "s3": 15.0, "s4": 11.0, "s5": 15.0, "s6": 8.0, "total": 72.5, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=ROAST+coffee+eatery+Thonglor&query_place_id=ChIJicwRRFOe4jARAcJ7qJDLIe8", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 91, "name": "ซูรุอุด้ง ทองหล่อ", "area": "ทองหล่อ", "type": "ญี่ปุ่น", "rating": 4.5, "reviews": 793, "priceTier": "฿ (<200/คน)", "minPrice": 180, "s1": 17.5, "s2": 13.0, "s3": 11.0, "s4": 11.0, "s5": 15.0, "s6": 5.0, "total": 72.5, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%8B%E0%B8%B9%E0%B8%A3%E0%B8%B8%E0%B8%AD%E0%B8%B8%E0%B8%94%E0%B9%89%E0%B8%87+%E0%B8%97%E0%B8%AD%E0%B8%87%E0%B8%AB%E0%B8%A5%E0%B9%88%E0%B8%AD&query_place_id=ChIJMVFBNMaf4jAR06nE3QNo-V0", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 92, "name": "ครัวแม่ปัญญา", "area": "อารีย์", "type": "ไทย", "rating": 4.4, "reviews": 262, "priceTier": "฿ (<200/คน)", "minPrice": 100, "s1": 15.5, "s2": 12.6, "s3": 11.0, "s4": 12.0, "s5": 15.0, "s6": 6.0, "total": 72.1, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%84%E0%B8%A3%E0%B8%B1%E0%B8%A7%E0%B9%81%E0%B8%A1%E0%B9%88%E0%B8%9B%E0%B8%B1%E0%B8%8D%E0%B8%8D%E0%B8%B2&query_place_id=ChIJ2-Kuv6ee4jARBFIceBSs6sA", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 93, "name": "บ้านพึงชม", "area": "อารีย์", "type": "ไทย", "rating": 4.2, "reviews": 1625, "priceTier": "฿ (<200/คน)", "minPrice": 150, "s1": 15.5, "s2": 11.8, "s3": 11.0, "s4": 12.0, "s5": 15.0, "s6": 6.0, "total": 71.3, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%9A%E0%B9%89%E0%B8%B2%E0%B8%99%E0%B8%9E%E0%B8%B6%E0%B8%87%E0%B8%8A%E0%B8%A1&query_place_id=ChIJDeDuUByc4jARIqwSs_XcM2M", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 94, "name": "ราเมงเทอิ (สาขาพร้อมพงษ์)", "area": "พร้อมพงษ์", "type": "ญี่ปุ่น", "rating": 4.2, "reviews": 1234, "priceTier": "฿ (<200/คน)", "minPrice": 180, "s1": 15.5, "s2": 11.8, "s3": 11.0, "s4": 13.0, "s5": 15.0, "s6": 5.0, "total": 71.3, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%A3%E0%B8%B2%E0%B9%80%E0%B8%A1%E0%B8%87%E0%B9%80%E0%B8%97%E0%B8%AD%E0%B8%B4+%E0%B8%9E%E0%B8%A3%E0%B9%89%E0%B8%AD%E0%B8%A1%E0%B8%9E%E0%B8%87%E0%B8%A9%E0%B9%8C&query_place_id=ChIJPacUyh-f4jARamnDagcSuVg", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 95, "name": "อองตองข้าวซอย สาขา อารีย์", "area": "อารีย์", "type": "ไทย", "rating": 4.3, "reviews": 1857, "priceTier": "฿ (<200/คน)", "minPrice": 100, "s1": 16.5, "s2": 12.2, "s3": 11.0, "s4": 12.0, "s5": 13.5, "s6": 6.0, "total": 71.2, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%AD%E0%B8%AD%E0%B8%87%E0%B8%95%E0%B8%AD%E0%B8%87%E0%B8%82%E0%B9%89%E0%B8%B2%E0%B8%A7%E0%B8%8B%E0%B8%AD%E0%B8%A2+%E0%B8%AD%E0%B8%B2%E0%B8%A3%E0%B8%B5%E0%B8%A2%E0%B9%8C&query_place_id=ChIJT2m3lx2c4jARfziuf8CSZBY", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 96, "name": "Nobu", "area": "ทองหล่อ", "type": "ญี่ปุ่น", "rating": 4.5, "reviews": 289, "priceTier": "฿฿฿ (500+/คน)", "minPrice": 1200, "s1": 16.5, "s2": 13.0, "s3": 5.5, "s4": 11.0, "s5": 15.0, "s6": 10.0, "total": 71.0, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Nobu+Thonglor&query_place_id=ChIJLU92JFOe4jARFz2kE6QXUCE", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 97, "name": "กับข้าว' กับปลา เทอร์มินัล 21 อโศก", "area": "อโศก", "type": "ไทย", "rating": 4.1, "reviews": 671, "priceTier": "฿ (<200/คน)", "minPrice": 120, "s1": 13.5, "s2": 11.4, "s3": 11.0, "s4": 14.0, "s5": 15.0, "s6": 6.0, "total": 70.9, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%81%E0%B8%B1%E0%B8%9A%E0%B8%82%E0%B9%89%E0%B8%B2%E0%B8%A7+%E0%B8%81%E0%B8%B1%E0%B8%9A%E0%B8%9B%E0%B8%A5%E0%B8%B2+Terminal+21&query_place_id=ChIJs_PoE8Kf4jARE97dNv669s0", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 98, "name": "นานาเสะ ราเมน พร้อมพงษ์", "area": "พร้อมพงษ์", "type": "ญี่ปุ่น", "rating": 4.2, "reviews": 476, "priceTier": "฿ (<200/คน)", "minPrice": 180, "s1": 13.5, "s2": 11.8, "s3": 11.0, "s4": 13.0, "s5": 15.0, "s6": 5.0, "total": 69.3, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%99%E0%B8%B2%E0%B8%99%E0%B8%B2%E0%B9%80%E0%B8%AA%E0%B8%B0+%E0%B8%A3%E0%B8%B2%E0%B9%80%E0%B8%A1%E0%B8%99+%E0%B8%9E%E0%B8%A3%E0%B9%89%E0%B8%AD%E0%B8%A1%E0%B8%9E%E0%B8%87%E0%B8%A9%E0%B9%8C&query_place_id=ChIJq3-r7P2e4jARIIcGq9nSwBU", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 99, "name": "Huajai ร้านหัวใจ (Pop-up)", "area": "สยาม", "type": "อื่นๆ", "rating": 4.8, "reviews": 213, "priceTier": "฿ (<200/คน)", "minPrice": 80, "s1": 19.5, "s2": 5.0, "s3": 11.0, "s4": 14.0, "s5": 13.5, "s6": 4.0, "total": 67.0, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Huajai+Siam+Square&query_place_id=ChIJF4HflF-f4jARQJQc5fu64fM", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}, {"rank": 100, "name": "ก๋วยเตี๋ยว 1000 เส้น (Phan Zen Noodle)", "area": "อารีย์", "type": "ไทย", "rating": 4.0, "reviews": 369, "priceTier": "฿ (<200/คน)", "minPrice": 60, "s1": 11.5, "s2": 5.0, "s3": 11.0, "s4": 12.0, "s5": 15.0, "s6": 5.0, "total": 59.5, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=%E0%B8%81%E0%B9%8B%E0%B8%A7%E0%B8%A2%E0%B9%80%E0%B8%95%E0%B8%B5%E0%B9%8B%E0%B8%A2%E0%B8%A7+1000+%E0%B9%80%E0%B8%AA%E0%B9%89%E0%B8%99&query_place_id=ChIJHybrkx2c4jARx-5v3LSr0Fo", "location": "", "phone": "", "website": "", "pros": "", "cons": ""}];
+
+// Extra info for cards (not in scoring sheet)
+const WONGNAI_URLS = {
+  "TenTen ชาบู 4 สี หมีออนเซน": "https://www.wongnai.com/restaurants/3411925bY-tenten",
+  "Hongdae": "https://www.wongnai.com/restaurants/331835Mi-hongdae-bbq-buffet-siam-square-one",
+  "BORNGA THAILAND": "https://www.wongnai.com/restaurants/bornga",
+  "Nabezo Premium (Siam Paragon)": "https://www.wongnai.com/restaurants/1889436EO-nabezo-siam-paragon",
+  "KURATHAI SHOKUDO": "https://www.wongnai.com/restaurants/879314CB-kurathai-shokudo-phrom-phong",
+  "โกปี๊ฮับ ไพรม์ อารีย์": "https://www.wongnai.com/restaurants/2291054BG-kopihub-kopihub-prime-ari",
+  "คนละหม้อ Konlamoh": "https://www.wongnai.com/restaurants/1146816KU-konlamoh-premium-seafood",
+  "จากึมซอง สยามสแควร์ วัน": "https://www.wongnai.com/restaurants/718976tw-siam-square-one",
+  "ชาคาริช": "https://www.wongnai.com/restaurants/291737Wq-shakarich",
+  "ซูชิจูบัน สาขาอโศก": "https://www.wongnai.com/restaurants/262589cy-sushi-juban-asok",
+};
+const EXTRA = {
+  "TenTen ชาบู 4 สี หมีออนเซน": {location:"388 5th Floor, Siam Square One, ถ. พระรามที่ 1", phone:"+66 62 479 1623", website:"https://www.facebook.com/tentenshabusushi",
+    pros:"🍲 ชาบู 4 น้ำซุปเลือกได้|⭐ รีวิวสูงสุด 5,600+ ความน่าเชื่อถือสูง|🏢 ใน Siam Square One — BTS สยาม ออกได้เลย|👥 โต๊ะรองรับกลุ่ม 8–12 คน",
+    cons:"⏳ คิวยาวมากช่วง Weekend — ดังที่สุดในทำเลสยาม ควรถึงก่อนเวลา 30 นาที|⏱️ จำกัดเวลา 90–100 นาที/ราวด์ — กลุ่มใหญ่อาจกินไม่ทันอิ่ม|💰 ราคา 299++ (Net จริงประมาณ 340–360/คน) — อย่าลืมบวก SC และ VAT|🚫 ช่วง Peak Hour ห้ามแยกบิล — ต้องชำระรวม"},
+  "Hongdae": {location:"Unit #SS 5018-19, 388 ถ. พระรามที่ 1", phone:"+66 64 165 7175", website:"",
+    pros:"🥩 บุฟเฟต์เกาหลีไม่อั้น ทั้งเนื้อและเครื่องเคียง|⭐ รีวิวสูงสุดในทำเล 5,800+ รายการ|🎉 บรรยากาศสนุก เหมาะมื้อฉลอง|🏢 ใน Siam Square One ชั้น 5",
+    cons:"🔊 เสียงดังมาก — บรรยากาศ BBQ ไม่เหมาะถ้าต้องคุยงาน|🌫️ ควันจากเตาปิ้งย่าง — เสื้อผ้าอาจมีกลิ่น|⏱️ จำกัดเวลา 90 นาที — กลุ่ม 10+ คนควรแจ้งล่วงหน้าขอเวลาเพิ่ม|💰 ราคา 399++ (Net ประมาณ 460/คน) — แพงกว่า TenTen ~100 บาท/คน"},
+  "BORNGA THAILAND": {location:"ชั้น 2, บูเลอวาร์ด ทาวเวอร์, ซ. สุขุมวิท 39", phone:"+66 2 160 0095", website:"https://www.instagram.com/bornga_thailand",
+    pros:"🥩 เนื้อเกาหลี Grade A พรีเมียม|🏆 แบรนด์ต้นฉบับจากเกาหลี มีมาตรฐาน|⭐ รีวิว 4,100+ คะแนน 4.8|👥 ห้องส่วนตัวรองรับกลุ่มใหญ่ได้",
+    cons:"💰 ราคาสูงที่สุดใน Top 3 — ทีม 10 คนอาจจ่ายรวม 6,000–8,000 บาทขึ้นไป (à la carte)|🗺️ พร้อมพงษ์ ไม่มี BTS หน้าร้าน — ต้องต่อ Grab จาก BTS พร้อมพงษ์ ~5 นาที|📅 โต๊ะกลุ่มใหญ่ต้องจองล่วงหน้าอย่างน้อย 1–2 วัน|🍽️ ไม่ใช่บุฟเฟต์ — สั่งเป็นชุด ราคาบานปลายง่ายถ้าทีมกินเยอะ"},
+  "Nabezo Premium (Siam Paragon)": {location:"เลขที่ 991 ชั้น G ถ. พระรามที่ 1", phone:"+66 98 669 3174", website:"https://www.facebook.com/NabezoPremium/",
+    pros:"🍲 ชาบูญี่ปุ่นระดับพรีเมียม น้ำซุปปรุงเองสูตรต้นตำรับ|🏢 ใน Siam Paragon — พาร์กกิ้งสะดวก|⭐ Rating 4.9 (สูงสุดใน Top 5)|🎯 เหมาะมื้อสำคัญ/รับรองลูกค้า",
+    cons:"📊 รีวิวน้อยที่สุดในกลุ่ม (457 รายการ) — ยังใหม่อยู่ ข้อมูลยังไม่เพียงพอสรุปได้ชัด|💰 ราคา 499++/คน — Net ประมาณ 570–600 บาท ทีม 10 คน ≈ 5,700–6,000|🚗 Weekend ที่จอดรถ Paragon แน่นและแพง|🪑 ที่นั่งจำกัด — ควรจองล่วงหน้า 3–5 วันสำหรับกลุ่ม 10+ คน"},
+  "KURATHAI SHOKUDO": {location:"15 M Tower ซ. สุขุมวิท 35", phone:"+66 95 552 2188", website:"http://www.facebook.com/kurathaishokudo",
+    pros:"🍱 บุฟเฟต์ญี่ปุ่นราคาดีที่สุด (180/คน)|💰 ทีม 10 คนจ่ายรวมประมาณ 2,000 บาท|⭐ รีวิว 2,000+ คะแนน 4.8|🍣 เมนูหลากหลาย ซูชิ ราเมน ของทอด",
+    cons:"📍 พร้อมพงษ์ ไม่ใกล้ BTS — ต้องต่อ Grab หรือเดินจาก BTS ~10 นาที|🏠 ร้านขนาดเล็ก — ไม่แน่ใจว่ารองรับ 12 คนได้พร้อมกัน ควรโทรถามก่อน|⏳ รีวิวหลายรายการระบุว่ารอนานในชั่วโรงรับ (ร้านดัง แต่ขนาดเล็ก)|💰 ราคา 180/คน อาจยังไม่รวม VAT+SC — Net จริงประมาณ 207/คน"},
+};
+
+let currentData = [];
+let currentArea = "ทั้งหมด", currentFoodType = "ทั้งหมด";
+let currentTop = 10;
+let currentCardTop = 3;
+let currentTableTop = 10;
+
+// ─── CSV Parser ───────────────────────────────────────────────────
+
+function toggleSection(el) {
+  const body = el.nextElementSibling;
+  const isOpen = el.classList.contains('open');
+  if (isOpen) {
+    // Close: animate from scrollHeight → 0
+    body.style.height = body.scrollHeight + 'px';
+    requestAnimationFrame(() => {
+      body.style.height = '0';
+      body.style.opacity = '0';
+    });
+    el.classList.remove('open');
+    body.classList.remove('open');
+  } else {
+    // Open: animate from 0 → scrollHeight, then set auto
+    body.style.height = '0';
+    body.style.opacity = '0';
+    el.classList.add('open');
+    body.classList.add('open');
+    requestAnimationFrame(() => {
+      body.style.height = body.scrollHeight + 'px';
+      body.style.opacity = '1';
+      body.addEventListener('transitionend', function onEnd() {
+        body.style.height = 'auto';
+        body.removeEventListener('transitionend', onEnd);
+      }, { once: true });
+    });
+  }
+}
+function parseCSV(text) {
+  const rows = [];
+  let row = [], field = "", inQuote = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (c === '"') { inQuote = !inQuote; continue; }
+    if (c === "," && !inQuote) { row.push(field.trim()); field = ""; continue; }
+    if ((c === "\n" || c === "\r") && !inQuote) {
+      if (c === "\r" && text[i+1] === "\n") i++;
+      row.push(field.trim()); rows.push(row); row = []; field = ""; continue;
+    }
+    field += c;
+  }
+  if (field || row.length) { row.push(field.trim()); rows.push(row); }
+  return rows;
+}
+
+// Helper: find field by partial key match
+function getF(obj, key) {
+  const k = key.toLowerCase();
+  const found = Object.keys(obj).find(h => h.toLowerCase().replace(/\s+/g,"").includes(k.replace(/\s+/g,"")));
+  return found ? obj[found] : "";
+}
+
+function csvToObjects(rows) {
+  if (rows.length < 2) return [];
+  const headers = rows[0];
+  return rows.slice(1).filter(r => r.length > 1 && r[0]).map(r => {
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = r[i] || "");
+    return obj;
+  });
+}
+
+// ─── Fetch from Google Sheets ───────────────────────────────────
+async function fetchSheet() {
+  const status = document.getElementById("data-status");
+  try {
+    const res = await fetch(SHEET_CSV_URL, {cache:"no-cache"});
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    const objs = csvToObjects(rows);
+    if (objs.length > 0) {
+      // Map CSV fields to our data format
+      currentData = objs.map(o => ({
+        rank: parseInt(o["อันดับ"]||"0"),
+        name: o["ชื่อร้าน"]||"",
+        area: o["ย่าน"]||"",
+        type: o["ประเภทอาหาร"]||"",
+        rating: parseFloat(o["Google Rating"]||"0"),
+        reviews: parseInt(o["จำนวนรีวิว"]||"0"),
+        priceTier: o["ระดับราคา"]||"",
+        minPrice: guessMinPrice(o["ระดับราคา"]||""),
+        maxPrice: guessMaxPrice(o["ระดับราคา"]||""),
+        s1: parseFloat(getF(o,"S1")||"0"),
+        s2: parseFloat(getF(o,"S2")||"0"),
+        s3: parseFloat(getF(o,"S3")||"0"),
+        s4: parseFloat(getF(o,"S4")||"0"),
+        s5: parseFloat(getF(o,"S5")||"0"),
+        s6: parseFloat(getF(o,"S6")||"0"),
+        total: parseFloat(getF(o,"คะแนนรวม")||"0"),
+        mapsUrl: o["Google Maps URL"]||"",
+        location: EXTRA[o["ชื่อร้าน"]]?.location||"",
+        phone: EXTRA[o["ชื่อร้าน"]]?.phone||"",
+        website: EXTRA[o["ชื่อร้าน"]]?.website||"",
+        pros: EXTRA[o["ชื่อร้าน"]]?.pros||"",
+        cons: EXTRA[o["ชื่อร้าน"]]?.cons||"",
+      })).filter(d => d.name && d.total > 0);
+      status.textContent = "✓ Live — " + currentData.length + " ร้าน";
+      status.className = "live";
+      document.getElementById("last-updated").textContent = new Date().toLocaleString("th-TH");
+      renderAll();
+      return;
+    }
+  } catch(e) {
+    console.warn("Sheet fetch failed:", e);
+  }
+  // Fallback
+  currentData = FALLBACK.map(d => ({
+    ...d,
+    maxPrice: guessMaxPrice(d.priceTier||""),
+    pros: EXTRA[d.name]?.pros || d.pros || "",
+    cons: EXTRA[d.name]?.cons || d.cons || "",
+    location: EXTRA[d.name]?.location || d.location || "",
+    phone: EXTRA[d.name]?.phone || d.phone || "",
+    website: EXTRA[d.name]?.website || d.website || "",
+  }));
+  status.textContent = "⚠ ใช้ข้อมูล offline (publish sheet เพื่อให้ live)";
+  status.className = "error";
+  document.getElementById("last-updated").textContent = "5 มิ.ย. 2569 (snapshot)";
+  renderAll();
+}
+
+function guessMinPrice(tier) {
+  if (tier.includes("500")) return 500;
+  if (tier.includes("200")) return 200;
+  return 150;
+}
+function guessMaxPrice(tier) {
+  if (tier.includes("500")) return 900;
+  if (tier.includes("200")) return 499;
+  return 199;
+}
+
+// ─── Filter helpers ───────────────────────────────────────────────
+function getFiltered() {
+  const budget = parseInt(document.getElementById("budget-input").value||"0");
+  let data = currentData.filter(d => {
+    if (currentArea !== "ทั้งหมด" && d.area !== currentArea) return false;
+    if (currentFoodType !== "ทั้งหมด" && d.type !== currentFoodType) return false;
+    if (budget > 0 && d.minPrice > budget) return false;
+    return true;
+  });
+  data.sort((a,b) => b.total - a.total);
+  return data;
+}
+
+function buildFoodTypeFilter() {
+  const types = [...new Set(currentData.map(d => d.type).filter(Boolean))].sort();
+  const wrap = document.getElementById("type-filter");
+  if (!wrap) return;
+  wrap.innerHTML = `<button class="tbtn active" data-type="ทั้งหมด" onclick="setFoodType(this)">ทั้งหมด</button>` +
+    types.map(t => `<button class="tbtn" data-type="${t}" onclick="setFoodType(this)">${getFoodIcon(t)} ${t}</button>`).join("");
+}
+
+function setFoodType(btn) {
+  document.querySelectorAll("#type-filter .tbtn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  currentFoodType = btn.dataset.type;
+  renderAll();
+}
+
+function setArea(btn) {
+  document.querySelectorAll("#area-filter .abtn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  currentArea = btn.dataset.area;
+  renderAll();
+}
+function setTop(btn, n) {
+  document.querySelectorAll("#sec-top3 .btn-group .btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  currentCardTop = n;
+  renderTop3Cards();
+}
+function setTableTop(btn) {
+  document.querySelectorAll("#top-filter .btn").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  currentTableTop = parseInt(btn.dataset.top);
+  renderTable(getFiltered().slice(0, currentTableTop === 100 ? 9999 : currentTableTop));
+  document.getElementById("rank-count").textContent = "แสดง " + Math.min(currentTableTop, getFiltered().length) + " จาก " + getFiltered().length + " ร้าน";
+}
+function setBudget(val) {
+  document.getElementById("budget-input").value = val > 0 ? val : "";
+  renderAll();
+}
+
+// ─── Render table ─────────────────────────────────────────────────
+function renderAll() {
+  if (!document.querySelector("#type-filter .tbtn[data-type]:not([data-type='ทั้งหมด'])")) buildFoodTypeFilter();
+  const data = getFiltered();
+  const areaLabel = currentArea === "ทั้งหมด" ? "ทั้งหมด" : currentArea;
+  document.getElementById("top3-area-label").textContent = areaLabel;
+  document.getElementById("compare-area-label").textContent = "Top 5 — " + areaLabel;
+
+  // Summary bar
+  const budget = parseInt(document.getElementById("budget-input").value||"0");
+  let summary = `พบ <strong>${data.length} ร้าน</strong>`;
+  if (currentArea !== "ทั้งหมด") summary += ` ในย่าน <strong>${currentArea}</strong>`;
+  if (currentFoodType !== "ทั้งหมด") summary += ` · ประเภท <strong>${currentFoodType}</strong>`;
+  if (budget > 0) summary += ` · งบไม่เกิน <strong>฿${budget.toLocaleString()}/คน</strong>`;
+  document.getElementById("filter-summary").innerHTML = summary;
+
+  renderTop3Cards();
+  renderCompare(data.slice(0,5));
+  renderTable(data.slice(0, currentTableTop === 100 ? 9999 : currentTableTop));
+  document.getElementById("rank-count").textContent = `แสดง ${Math.min(currentTableTop, data.length)} จาก ${data.length} ร้าน`;
+}
+function renderTop3Cards() {
+  const data = getFiltered();
+  renderTop3(data.slice(0, currentCardTop));
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById("rank-tbody");
+  if (!data.length) { tbody.innerHTML = `<tr><td colspan="14" class="no-results">ไม่พบร้านที่ตรงเงื่อนไข</td></tr>`; return; }
+  tbody.innerHTML = data.map((d, idx) => {
+    const rankClass = idx===0?"rank-1":idx===1?"rank-2":idx===2?"rank-3":"rank-other";
+    const rankIcon = idx===0?"🥇":idx===1?"🥈":idx===2?"🥉":idx+1;
+    const foodIcon2 = getFoodIcon(d.type);
+    return `<tr>
+      <td class="rank-num ${rankClass}">${rankIcon}</td>
+      <td class="name-cell">
+        <div class="name-hover-wrap">
+          <span>${d.name}</span>
+          <div class="name-popup">
+            <iframe class="card-np-map-frame" loading="lazy"
+              src="${getPlaceEmbedUrl(d)}"
+              style="height:120px;"></iframe>
+            <div class="name-popup-body">
+              <div class="name-popup-title">${d.name}</div>
+              <div class="name-popup-meta">
+                <span class="area-tag area-${d.area}">${d.area}</span>
+                <span class="food-type-badge" style="font-size:11px;padding:2px 8px;">${getFoodIcon(d.type)} ${d.type}</span>
+              </div>
+              <div class="name-popup-stats">
+                <span class="name-popup-stat">★ ${d.rating.toFixed(1)}</span>
+                <span class="name-popup-stat">฿${d.minPrice||"—"}/คน</span>
+                <span class="name-popup-stat" style="color:var(--accent);">${d.total.toFixed(1)} pts</span>
+              </div>
+              <div class="name-popup-links">
+                ${d.mapsUrl ? `<a href="${d.mapsUrl}" target="_blank" class="name-popup-link">📍 Maps</a>` : ""}
+                <a href="https://www.wongnai.com/search?q=${encodeURIComponent(d.name)}" target="_blank" class="name-popup-link">🍜 Wongnai</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </td>
+      <td><span class="food-type-badge" style="font-size:11px;padding:2px 8px;">${foodIcon2} ${d.type}</span></td>
+      <td><span class="area-tag area-${d.area}">${d.area}</span></td>
+      <td><span class="rating-star">★</span> ${d.rating.toFixed(1)} <span style="font-size:11px;color:var(--text2)">(${d.reviews.toLocaleString()})</span></td>
+      <td class="price-tag">${d.priceTier}</td>
+      <td><div class="score-bar-wrap"><div class="score-total">${d.total.toFixed(1)}</div><div class="score-bar"><div class="score-fill" style="width:${d.total}%"></div></div></div></td>
+      <td style="color:var(--text2)">${d.s1}</td>
+      <td style="color:var(--text2)">${d.s2}</td>
+      <td style="color:var(--text2)">${d.s3}</td>
+      <td style="color:var(--text2)">${d.s4}</td>
+      <td style="color:var(--text2)">${d.s5}</td>
+      <td style="color:var(--text2)">${d.s6}</td>
+      <td>${d.mapsUrl?`<a href="${d.mapsUrl}" target="_blank" class="maps-link">📍 Maps</a>`:""}</td>
+    </tr>`;
+  }).join("");
+}
+
+// ─── Render Top 3 cards ───────────────────────────────────────────
+// ─── Auto-generate strengths/weaknesses from S1-S6 ───────────────
+function getAutoTags(d) {
+  const strengths = [], weaknesses = [];
+  // S1: Rating & Review (max 25)
+  if (d.s1 >= 21) strengths.push("⭐ Rating สูง + รีวิวเยอะ");
+  else if (d.s1 >= 18) strengths.push("⭐ Rating ดี");
+  else if (d.s1 <= 16) weaknesses.push("รีวิวน้อย ยังไม่มั่นใจ");
+  // S2: Group Suitability (max 20)
+  if (d.s2 >= 17) strengths.push("👥 เหมาะมากสำหรับกลุ่ม");
+  else if (d.s2 <= 13) weaknesses.push("อาจไม่รองรับกลุ่ม 8+ คน ควรโทรจองก่อน");
+  // S3: Price (max 15)
+  if (d.s3 >= 14) strengths.push("💰 ราคาคุ้มค่า");
+  else if (d.s3 <= 9) weaknesses.push("ราคาค่อนข้างสูง (฿฿฿)");
+  else if (d.s3 <= 11) weaknesses.push("ราคาปานกลาง-สูง");
+  // S4: Travel Convenience (max 15) — area-aware BTS distance
+  if (d.s4 >= 15) strengths.push("🚇 อยู่ในห้างหรือติด BTS โดยตรง");
+  else if (d.s4 >= 14) strengths.push("🚇 BTS ใกล้มาก (~2 นาที)");
+  else if (d.s4 <= 11) {
+    const btsDist = {
+      "พร้อมพงษ์": "🚇 ห่างจาก BTS พร้อมพงษ์ ~5 นาที",
+      "ทองหล่อ": "🚇 ห่างจาก BTS ทองหล่อ ~8-10 นาที",
+      "อารีย์": "🚇 ห่างจาก BTS อารีย์ ~5-10 นาที",
+      "อโศก": "🚇 ห่างจาก BTS อโศก ~5 นาที",
+      "สยาม": "🚇 ห่างจาก BTS สยาม ~5 นาที",
+    };
+    weaknesses.push(btsDist[d.area] || "ต้องเดินทางเพิ่มจาก BTS");
+  } else if (d.s4 <= 13) {
+    const btsMid = {
+      "พร้อมพงษ์": "🚇 ห่างจาก BTS พร้อมพงษ์ ~5 นาที",
+      "ทองหล่อ": "🚇 ห่างจาก BTS ทองหล่อ ~5 นาที",
+      "อารีย์": "🚇 ห่างจาก BTS อารีย์ ~5 นาที",
+      "อโศก": "🚇 ห่างจาก BTS อโศก ~3 นาที",
+      "สยาม": "🚇 ห่างจาก BTS สยาม ~3 นาที",
+    };
+    weaknesses.push(btsMid[d.area] || "เดินจาก BTS เล็กน้อย");
+  }
+  // S5: Data Completeness (max 15)
+  if (d.s5 >= 14) strengths.push("📋 ข้อมูลครบ ตรวจสอบได้");
+  else if (d.s5 <= 12) weaknesses.push("ข้อมูลออนไลน์น้อย ควรโทรยืนยันก่อนไป");
+  // S6: Uniqueness (max 10)
+  if (d.s6 >= 9) strengths.push("🌟 ประสบการณ์พิเศษ / คุ้มค่า");
+  else if (d.s6 <= 7) weaknesses.push("ไม่มีคอนเซปต์พิเศษ / ทาน-จ่าย-กลับ");
+  return { strengths, weaknesses };
+}
+
+
+const FOOD_TYPE_ICON = {
+  "ญี่ปุ่น":"🍣","เกาหลี":"🥩","ไทย":"🌶️","บุฟเฟต์/ชาบู":"🍲","ชาบู":"🍲",
+  "ติ่มซำ":"🥟","อาหารทะเล":"🦞","อิตาเลียน":"🍝","เม็กซิกัน":"🌮",
+  "อเมริกัน":"🍔","จีน":"🥡","อินเดีย":"🍛","เวียดนาม":"🍜","ฟิวชั่น":"🍴"
+};
+function getFoodIcon(type) {
+  for(const k in FOOD_TYPE_ICON) if(type.includes(k)) return FOOD_TYPE_ICON[k];
+  return "🍴";
+}
+function getBarClass(val, max) {
+  const pct = val / max;
+  if (pct >= 0.85) return "strong";
+  if (pct >= 0.70) return "medium";
+  return "weak";
+}
+
+function getReasoning(d, rank) {
+  const { strengths } = getAutoTags(d);
+  const rankWord = ["อันดับ 1","อันดับ 2","อันดับ 3"][rank] || ("อันดับ " + (rank+1));
+  const scoreNote = d.total.toFixed(1) + "/100";
+  const priceNote = d.minPrice ? "ราคาเฉลี่ย ฿" + d.minPrice.toLocaleString() + "/คน (ทีม 10 คน ≈ ฿" + (d.minPrice*10).toLocaleString() + ")" : d.priceTier;
+  const topPoints = strengths.slice(0,2).map(s => s.replace(/^\S+\s/,'')).join(" และ ");
+  let text = "ได้ " + rankWord + " จาก 100 ร้านใน 5 ย่าน คะแนนรวม " + scoreNote;
+  if (topPoints) text += " — จุดเด่น: " + topPoints;
+  text += " " + priceNote;
+  if (d.s2 >= 17) text += " รองรับกลุ่ม 8–12 คนได้ดี";
+  else if (d.s2 <= 13) text += " เหมาะกลุ่มขนาดเล็ก-กลาง";
+  return text;
+}
+
+function renderTop3(data) {
+  const medals = ["👑","🌟","⭐"];
+  const borders = ["card-1","card-2","card-3"];
+  const barDefs = [
+    {key:"s1", label:"S1 Rating", max:25},
+    {key:"s2", label:"S2 กลุ่ม", max:20},
+    {key:"s3", label:"S3 ราคา", max:15},
+    {key:"s4", label:"S4 เดินทาง", max:15},
+    {key:"s5", label:"S5 ข้อมูล", max:15},
+    {key:"s6", label:"S6 พิเศษ", max:10},
+  ];
+  const container = document.getElementById("top3-cards");
+  if (!data.length) { container.innerHTML = `<p class="no-results">ไม่พบข้อมูล</p>`; return; }
+  container.innerHTML = data.map((d, i) => {
+    const budgetText = d.minPrice ? `฿${d.minPrice.toLocaleString()}/คน` : d.priceTier;
+    const priceRange = (d.minPrice && d.maxPrice) ? `฿${d.minPrice.toLocaleString()}–฿${d.maxPrice.toLocaleString()}/คน` : budgetText;
+    const teamCost = d.minPrice ? `ทีม 10 คน ≈ ฿${(d.minPrice*10).toLocaleString()}–฿${(d.maxPrice*10).toLocaleString()}` : "";
+    const teamMin = d.minPrice ? `฿${(d.minPrice*8).toLocaleString()}–฿${(d.minPrice*12).toLocaleString()}` : "—";
+    const { strengths, weaknesses } = getAutoTags(d);
+    const barsHTML = barDefs.map(b => {
+      const val = d[b.key] || 0;
+      const pct = Math.round(val / b.max * 100);
+      const cls = getBarClass(val, b.max);
+      return `<div class="card-bar-row">
+        <div class="card-bar-label">${b.label}</div>
+        <div class="card-bar-track"><div class="card-bar-fill ${cls}" style="width:${pct}%"></div></div>
+        <div class="card-bar-val">${val}</div>
+      </div>`;
+    }).join("");
+    const foodIcon = getFoodIcon(d.type);
+    return `<div class="card ${borders[i]||""}">
+      <div class="card-header-row">
+        <div class="card-medal-wrap"><div class="card-medal">${medals[i]||""}</div><div class="card-rank-label">อันดับ ${i+1}</div></div>
+        <div class="score-hover-wrap">
+          <div class="card-score-big">${d.total.toFixed(1)}<span class="card-score-denom">/100</span></div>
+          <span class="score-hint">ชี้ดูรายละเอียด ↗</span>
+          <div class="score-bars-tooltip">
+            <div class="card-section-title">คะแนนแต่ละด้าน</div>
+            <div class="card-score-bars">${barsHTML}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-name-hover">
+        <a class="card-name-big" href="${d.mapsUrl || 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(d.name+' '+d.area)}" target="_blank" style="text-decoration:none;">${d.name} <span style="font-size:13px;color:var(--accent);font-weight:400;">↗</span></a>
+        <div class="card-name-popup">
+          <iframe class="card-np-map-frame" loading="lazy"
+            src="${getPlaceEmbedUrl(d)}"
+            allowfullscreen></iframe>
+          <div class="card-np-body">
+            <div class="card-np-name">${d.name}</div>
+            <div class="card-np-meta">
+              <span class="area-tag area-${d.area}">${d.area}</span>
+              <span class="food-type-badge" style="font-size:11px;padding:2px 8px;">${foodIcon} ${d.type}</span>
+            </div>
+            <div class="card-np-stats">
+              <span class="card-np-stat">★ ${d.rating.toFixed(1)}</span>
+              <span class="card-np-stat">${d.reviews.toLocaleString()} รีวิว</span>
+              <span class="card-np-stat" style="color:var(--accent);">${d.total.toFixed(1)} คะแนน</span>
+              <span class="card-np-stat">฿${d.minPrice||"—"}/คน</span>
+            </div>
+
+            <div class="card-np-links">
+              ${d.mapsUrl ? `<a href="${d.mapsUrl}" target="_blank" class="card-np-link">📍 Maps</a>` : ""}
+              <a href="https://www.wongnai.com/search?q=${encodeURIComponent(d.name)}" target="_blank" class="card-np-link">🍜 Wongnai</a>
+              ${d.website ? `<a href="${d.website}" target="_blank" class="card-np-link">🌐 เว็บ</a>` : ""}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-meta-row">
+        <span class="area-tag area-${d.area}">${d.area}</span>
+        <span class="food-type-badge">${foodIcon} ${d.type}</span>
+      </div>
+
+      <div class="card-stats-row">
+        <div class="cstat"><div class="cstat-val">★${d.rating.toFixed(1)}</div><div class="cstat-label">Rating</div></div>
+        <div class="cstat"><div class="cstat-val">${d.reviews >= 1000 ? (d.reviews/1000).toFixed(1)+'K' : d.reviews}</div><div class="cstat-label">รีวิว</div></div>
+        <div class="price-chip-wrap">
+          <div class="price-chip" style="width:100%;padding:10px 8px;text-align:center;">
+            <div class="price-chip-val" style="font-size:15px;font-weight:700;">${d.minPrice ? '฿'+d.minPrice.toLocaleString() : '—'}</div>
+            <div class="price-chip-label">ราคาเริ่มต้น ↗</div>
+          </div>
+          <div class="price-popup-dd">
+            <div class="price-dd-title">ประมาณการค่าใช้จ่าย</div>
+            ${[8,9,10,11,12].map(n => `<div class="price-dd-row"><span class="price-dd-pax">${n} คน</span><span class="price-dd-range">฿${d.minPrice?(d.minPrice*n).toLocaleString():'—'}–฿${d.maxPrice?(d.maxPrice*n).toLocaleString():'—'}</span></div>`).join("")}
+          </div>
+        </div>
+      </div>
+
+      ${strengths.length ? `<div class="card-strengths">
+        ${strengths.map(s=>`<div class="strength-row"><span class="strength-dot"></span><span class="strength-text">${s}</span></div>`).join("")}
+      </div>` : ""}
+      ${weaknesses.length ? `<div class="card-weaknesses">
+        ${weaknesses.map(w=>`<div class="weakness-row"><span class="weakness-dot"></span><span class="weakness-text">${w}</span></div>`).join("")}
+      </div>` : ""}
+
+      <div class="card-reason-box">
+        <div class="card-reason-label">💡 เหตุผลที่แนะนำ</div>
+        <div class="card-reason-text">${getReasoning(d, i)}</div>
+      </div>
+
+      <div class="card-links">
+        ${WONGNAI_URLS[d.name] ? `<a href="${WONGNAI_URLS[d.name]}" target="_blank" class="card-link-btn">🍜 Wongnai</a>` : `<a href="https://www.wongnai.com/search?q=${encodeURIComponent(d.name)}" target="_blank" class="card-link-btn">🍜 Wongnai</a>`}
+        ${d.website?`<a href="${d.website}" target="_blank" class="card-link-btn">🌐 Web</a>`:""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ─── Render Comparison ────────────────────────────────────────────
+function renderCompare(data) {
+  const wrap = document.getElementById("compare-tbody");
+  if (!data.length) { wrap.innerHTML = ""; return; }
+  const rankLabel = ["🥇","🥈","🥉","4","5"];
+  const barDefs = [
+    {key:"s1", label:"S1 Rating", max:25},
+    {key:"s2", label:"S2 กลุ่ม", max:20},
+    {key:"s3", label:"S3 ราคา", max:15},
+    {key:"s4", label:"S4 เดินทาง", max:15},
+    {key:"s5", label:"S5 ข้อมูล", max:15},
+    {key:"s6", label:"S6 พิเศษ", max:10},
+  ];
+  wrap.innerHTML = data.map((d, i) => {
+    const extraData = EXTRA[d.name] || {};
+    const extPros = ((extraData.pros || d.pros||"")).split("|").filter(Boolean);
+    const extCons = ((extraData.cons || d.cons||"")).split("|").filter(Boolean);
+    const { strengths, weaknesses } = getAutoTags(d);
+    const prosShow = (extPros.length ? extPros : strengths).slice(0,3);
+    const consShow = (extCons.length ? extCons : weaknesses.length ? weaknesses : ["ดูรายละเอียดใน Google Maps"]).slice(0,3);
+    const foodIcon = getFoodIcon(d.type);
+    const wongnaiUrl = WONGNAI_URLS[d.name] || `https://www.wongnai.com/search?q=${encodeURIComponent(d.name)}`;
+    const budgetText = d.minPrice ? `฿${d.minPrice.toLocaleString()}/คน` : d.priceTier;
+    const priceRange = (d.minPrice && d.maxPrice) ? `฿${d.minPrice.toLocaleString()}–฿${d.maxPrice.toLocaleString()}/คน` : budgetText;
+    const teamCost = d.minPrice ? `ทีม 10 คน ≈ ฿${(d.minPrice*10).toLocaleString()}–฿${(d.maxPrice*10).toLocaleString()}` : "";
+    const ddBars = barDefs.map(b => {
+      const val = d[b.key] || 0;
+      const pct = Math.round(val / b.max * 100);
+      return `<div class="cmp-dd-row">
+        <div class="cmp-dd-label">${b.label}</div>
+        <div class="cmp-dd-bar"><div class="cmp-dd-fill" style="width:${pct}%"></div></div>
+        <div class="cmp-dd-val">${val}</div>
+      </div>`;
+    }).join("");
+    return `<div class="cmp-card">
+      <div class="cmp-top">
+        <div class="cmp-top-row">
+          <div class="cmp-rank">${rankLabel[i]||i+1}</div>
+          <div class="cmp-name-navy">${d.name}</div>
+          <span class="area-tag area-${d.area}">${d.area}</span>
+          <span class="food-type-badge" style="font-size:11px;padding:3px 10px;">${foodIcon} ${d.type}</span>
+        </div>
+        <div class="cmp-chips">
+          <div class="cmp-chip">
+            <div class="cmp-chip-val">★ ${d.rating.toFixed(1)}</div>
+            <div class="cmp-chip-label">Rating</div>
+          </div>
+          <div class="price-chip-wrap">
+            <div class="price-chip">
+              <div class="cmp-chip-val" style="font-size:15px;font-weight:700;">${d.minPrice ? '฿'+d.minPrice.toLocaleString() : '—'}</div>
+              <div class="cmp-chip-label">ราคาเริ่มต้น · ชี้ดูรายละเอียด ↗</div>
+            </div>
+            <div class="price-popup-dd">
+              <div class="price-dd-title">ประมาณการค่าใช้จ่าย</div>
+              ${[8,9,10,11,12].map(n => `<div class="price-dd-row"><span class="price-dd-pax">${n} คน</span><span class="price-dd-range">฿${d.minPrice?(d.minPrice*n).toLocaleString():'—'}–฿${d.maxPrice?(d.maxPrice*n).toLocaleString():'—'}</span></div>`).join("")}
+            </div>
+          </div>
+          <div class="cmp-chip cmp-chip-score">
+            <div class="cmp-chip-val">${d.total.toFixed(1)} <span style="font-size:10px;font-weight:400;color:var(--text2)">/100</span></div>
+            <div class="cmp-chip-label">คะแนนรวม ↗</div>
+            <div class="cmp-score-dropdown">
+              <div class="cmp-dd-title">คะแนนแต่ละด้าน</div>
+              ${ddBars}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cmp-body">
+        <div class="cmp-body-col">
+          <div class="cmp-col-label cmp-pros-label">✅ จุดเด่น</div>
+          ${prosShow.map(p=>`<div class="cmp-pros-item"><span class="cmp-dot cmp-dot-green"></span>${p}</div>`).join("")}
+        </div>
+        <div class="cmp-body-col">
+          <div class="cmp-col-label cmp-cons-label">⚠️ ข้อควรระวัง</div>
+          ${consShow.map(c=>`<div class="cmp-cons-item"><span class="cmp-dot cmp-dot-red"></span>${c}</div>`).join("")}
+        </div>
+      </div>
+      <div class="cmp-links-row">
+        ${d.mapsUrl?`<a href="${d.mapsUrl}" target="_blank" class="cmp-link-btn">📍 Maps</a>`:""}
+        <a href="${wongnaiUrl}" target="_blank" class="cmp-link-btn">🍜 Wongnai</a>
+        ${d.website?`<a href="${d.website}" target="_blank" class="cmp-link-btn">🌐 Web</a>`:""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+
+
+// ─── Food type gradient map ────────────────────────────────────
+const FOOD_GRADIENT = {
+  "ญี่ปุ่น":    "linear-gradient(135deg,#C8332A 0%,#8B1A14 100%)",
+  "เกาหลี":    "linear-gradient(135deg,#1E4D8C 0%,#0D2E5E 100%)",
+  "ไทย":       "linear-gradient(135deg,#1A6B3C 0%,#0D4025 100%)",
+  "บุฟเฟต์/ชาบู":"linear-gradient(135deg,#B45309 0%,#7C3A00 100%)",
+  "ชาบู":      "linear-gradient(135deg,#B45309 0%,#7C3A00 100%)",
+  "ติ่มซำ":    "linear-gradient(135deg,#C2410C 0%,#7C2D12 100%)",
+  "อาหารทะเล": "linear-gradient(135deg,#0E7490 0%,#065666 100%)",
+  "ทะเล/ซีฟู้ด":"linear-gradient(135deg,#0E7490 0%,#065666 100%)",
+  "อิตาเลียน": "linear-gradient(135deg,#15803D 0%,#166534 100%)",
+  "เม็กซิกัน": "linear-gradient(135deg,#B45309 0%,#92400E 100%)",
+  "ตะวันตก/อินเตอร์":"linear-gradient(135deg,#374151 0%,#1F2937 100%)",
+  "ฟิวชั่น":   "linear-gradient(135deg,#7C3AED 0%,#4C1D95 100%)",
+  "จีน":       "linear-gradient(135deg,#DC2626 0%,#991B1B 100%)",
+  "อินเดีย":   "linear-gradient(135deg,#D97706 0%,#92400E 100%)",
+  "เวียดนาม":  "linear-gradient(135deg,#DC2626 0%,#7C1515 100%)",
+};
+function getFoodGradient(type) {
+  for (const k in FOOD_GRADIENT) if (type && type.includes(k)) return FOOD_GRADIENT[k];
+  return "linear-gradient(135deg,#1B2A4A 0%,#243752 100%)";
+}
+
+// ─── Helper: build Google Maps embed URL with place_id ───────────────────
+function getPlaceEmbedUrl(d) {
+  if (d.mapsUrl) {
+    // Use the query param (already encoded restaurant name) — works without API key
+    const qm = d.mapsUrl.match(/[?&]query=([^&]+)/);
+    if (qm && qm[1]) {
+      return 'https://maps.google.com/maps?q=' + qm[1] + '&output=embed&zoom=15&hl=th';
+    }
+  }
+  return 'https://maps.google.com/maps?q=' + encodeURIComponent(d.name + ' ' + d.area + ' กรุงเทพ') + '&output=embed&zoom=15&hl=th';
+}
+
+fetchSheet();
+
+</script>
+
+<!-- ═══ AI CHATBOT WIDGET ═══ -->
+<style>
+  /* ── Chat button ── */
+  #chat-fab{position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#1B2A4A,#F48C0A);border:none;cursor:pointer;box-shadow:0 4px 20px rgba(27,42,74,.35);z-index:10000;display:flex;align-items:center;justify-content:center;font-size:24px;transition:transform .2s,box-shadow .2s;}
+  #chat-fab:hover{transform:scale(1.1);box-shadow:0 6px 28px rgba(27,42,74,.45);}
+  #chat-fab .chat-badge{position:absolute;top:0;right:0;width:16px;height:16px;background:#4ade80;border-radius:50%;border:2px solid #fff;animation:pulse 2s infinite;}
+  /* ── Chat window ── */
+  #chat-window{position:fixed;bottom:96px;right:28px;width:360px;height:500px;background:#fff;border-radius:22px;box-shadow:0 16px 48px rgba(27,42,74,.22);border:1.5px solid #E8DCC8;z-index:10000;display:none;flex-direction:column;overflow:hidden;font-family:"Kanit","Prompt","Sarabun",sans-serif;}
+  #chat-window.open{display:flex;}
+  /* Header */
+  .chat-header{background:linear-gradient(135deg,#1B2A4A,#243752);padding:14px 18px;display:flex;align-items:center;gap:10px;flex-shrink:0;}
+  .chat-header-icon{font-size:22px;}
+  .chat-header-title{color:#fff;font-weight:800;font-size:14px;flex:1;}
+  .chat-header-sub{color:rgba(255,255,255,.6);font-size:10px;}
+  .chat-close{background:none;border:none;color:rgba(255,255,255,.7);font-size:18px;cursor:pointer;padding:4px;line-height:1;}
+  .chat-close:hover{color:#fff;}
+  /* Messages */
+  #chat-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;}
+  .msg{max-width:82%;line-height:1.5;font-size:13px;border-radius:16px;padding:9px 13px;}
+  .msg-bot{background:#FFF1D6;color:#1B2A4A;border-radius:4px 16px 16px 16px;align-self:flex-start;border:1px solid #FFE4CC;}
+  .msg-user{background:#1B2A4A;color:#fff;border-radius:16px 4px 16px 16px;align-self:flex-end;}
+  .msg-typing{background:#FFF1D6;border:1px solid #FFE4CC;border-radius:4px 16px 16px 16px;align-self:flex-start;padding:10px 16px;}
+  .typing-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#F48C0A;margin:0 2px;animation:typingBounce 1.2s infinite;}
+  .typing-dot:nth-child(2){animation-delay:.2s;}
+  .typing-dot:nth-child(3){animation-delay:.4s;}
+  @keyframes typingBounce{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-6px);opacity:1}}
+  /* Suggestions */
+  .chat-suggestions{padding:0 14px 10px;display:flex;flex-wrap:wrap;gap:5px;}
+  .sug-btn{font-size:11px;padding:5px 10px;border-radius:20px;border:1.5px solid #E8DCC8;background:#fff;color:#1B2A4A;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;white-space:nowrap;}
+  .sug-btn:hover{background:#1B2A4A;color:#fff;border-color:#1B2A4A;}
+  /* Input */
+  .chat-input-row{display:flex;padding:10px 12px;border-top:1px solid #F0E8DC;gap:8px;flex-shrink:0;background:#FEFCFA;}
+  #chat-input{flex:1;border:1.5px solid #E8DCC8;border-radius:20px;padding:8px 14px;font-size:13px;font-family:inherit;outline:none;transition:border-color .2s;background:#fff;}
+  #chat-input:focus{border-color:#F48C0A;}
+  #chat-send{background:#F48C0A;border:none;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;font-size:16px;flex-shrink:0;transition:background .15s;}
+  #chat-send:hover{background:#D97706;}
+  #chat-send:disabled{background:#ccc;cursor:default;}
+</style>
+
+<button id="chat-fab" onclick="toggleChat()" title="ถามหาร้านอาหาร">
+  🍽️
+  <span class="chat-badge"></span>
+</button>
+
+<div id="chat-window">
+  <div class="chat-header">
+    <span class="chat-header-icon">🤖</span>
+    <div>
+      <div class="chat-header-title">AI Food Assistant</div>
+      <div class="chat-header-sub">ข้อมูลจาก 100 ร้าน · 5 ย่าน</div>
+    </div>
+    <button class="chat-close" onclick="toggleChat()">✕</button>
+  </div>
+  <div id="chat-messages">
+    <div class="msg msg-bot">สวัสดีค่ะ 👋 ถามหาร้านอาหารสำหรับทีม 8–12 คนได้เลยนะคะ เช่น<br><br>
+    "ร้านญี่ปุ่นย่านสยาม งบ 400/คน"<br>
+    "เปรียบเทียบ TenTen กับ Hongdae"</div>
+  </div>
+  <div class="chat-suggestions">
+    <button class="sug-btn" onclick="askSuggestion(this)">ร้านที่ดีที่สุดทั้งหมด</button>
+    <button class="sug-btn" onclick="askSuggestion(this)">ญี่ปุ่นย่านสยาม</button>
+    <button class="sug-btn" onclick="askSuggestion(this)">งบไม่เกิน 300/คน</button>
+    <button class="sug-btn" onclick="askSuggestion(this)">เหมาะกลุ่ม 10 คน</button>
+  </div>
+  <div class="chat-input-row">
+    <input id="chat-input" type="text" placeholder="ถามหาร้านอาหาร..." onkeydown="if(event.key==='Enter')sendChat()">
+    <button id="chat-send" onclick="sendChat()">➤</button>
+  </div>
+</div>
+
+<script>
+const CHAT_API_URL = "/api/chat";
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSJkFFnQvxKQVWwXqPgl_bB1dNr12Uji_dWa68zJUelUXmwbskSz4kddUY4HPCg4qssR1OQKe_KDs3g/pub?gid=1972517149&single=true&output=csv";
+
+let chatOpen = false;
+let restaurantContext = "";
+
+function toggleChat() {
+  chatOpen = !chatOpen;
+  document.getElementById("chat-window").classList.toggle("open", chatOpen);
+  if (chatOpen && !restaurantContext) loadSheetForChat();
+}
+
+async function loadSheetForChat() {
+  try {
+    const resp = await fetch(SHEET_URL);
+    const csv = await resp.text();
+    // Summarize top 20 restaurants for context (keep token count manageable)
+    const lines = csv.split("\n").slice(0, 21);
+    restaurantContext = "ข้อมูลร้านอาหาร (จาก Google Sheets):\n" + lines.join("\n");
+  } catch(e) {
+    // Fallback: use embedded FALLBACK data
+    restaurantContext = currentData ? 
+      "ข้อมูลร้านอาหาร:\n" + currentData.slice(0,20).map(d=>
+        `${d.rank}. ${d.name} | ย่าน:${d.area} | ประเภท:${d.type} | Rating:${d.rating} | ราคา:${d.priceTier} | คะแนน:${d.total}`
+      ).join("\n") : "ข้อมูลไม่พร้อม";
+  }
+}
+
+function addMessage(text, role) {
+  const msgs = document.getElementById("chat-messages");
+  const div = document.createElement("div");
+  div.className = `msg msg-${role}`;
+  div.innerHTML = text.replace(/\n/g,"<br>");
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+  return div;
+}
+
+function showTyping() {
+  const msgs = document.getElementById("chat-messages");
+  const div = document.createElement("div");
+  div.className = "msg msg-typing";
+  div.id = "typing-indicator";
+  div.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function hideTyping() {
+  const t = document.getElementById("typing-indicator");
+  if (t) t.remove();
+}
+
+async function sendChat() {
+  const input = document.getElementById("chat-input");
+  const btn = document.getElementById("chat-send");
+  const question = input.value.trim();
+  if (!question) return;
+
+  input.value = "";
+  btn.disabled = true;
+  addMessage(question, "user");
+  showTyping();
+
+  // Make sure context is loaded
+  if (!restaurantContext) await loadSheetForChat();
+
+  const systemPrompt = `คุณเป็น AI ผู้ช่วยแนะนำร้านอาหารสำหรับทีม 8-12 คน ย่านกรุงเทพฯ
+ตอบภาษาไทยเท่านั้น กระชับ ชัดเจน ใช้ emoji ประกอบ
+อ้างอิงข้อมูลจากตารางด้านล่างเท่านั้น ห้ามแต่งข้อมูลเอง
+ถ้าถามเปรียบเทียบ ให้เปรียบเทียบชัดๆ ระบุคะแนนและราคา
+ถ้าถามแนะนำ ให้แนะนำ Top 3 พร้อมเหตุผลสั้นๆ
+
+${restaurantContext}`;
+
+  try {
+    const res = await fetch(CHAT_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        messages: [
+          {role: "system", content: systemPrompt},
+          {role: "user", content: question}
+        ]
+      })
+    });
+    const data = await res.json();
+    hideTyping();
+    if (data.choices?.[0]?.message?.content) {
+      addMessage(data.choices[0].message.content, "bot");
+    } else if (data.error) {
+      addMessage("❌ เกิดข้อผิดพลาด: " + (data.error.message || "ลองใหม่อีกครั้ง"), "bot");
+    } else {
+      addMessage("❌ ไม่ได้รับข้อมูลจาก AI ลองใหม่อีกครั้งนะคะ", "bot");
+    }
+  } catch(e) {
+    hideTyping();
+    addMessage("❌ เชื่อมต่อไม่ได้ กรุณาตรวจสอบ API key หรืออินเทอร์เน็ต", "bot");
+  }
+  btn.disabled = false;
+  input.focus();
+}
+
+function askSuggestion(btn) {
+  document.getElementById("chat-input").value = btn.textContent;
+  sendChat();
+}
+</script>
+
+</body>
+</html>
